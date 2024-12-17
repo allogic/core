@@ -16,12 +16,12 @@ CFLAGS += -Wno-gnu-binary-literal
 CFLAGS += -D_POSIX_C_SOURCE=200809L
 
 ifeq ($(BUILD),debug)
-    CFLAGS += -Og
+	CFLAGS += -Og
 	CFLAGS += -g
 	CFLAGS += -D_HEAP_TRACE
 	CFLAGS += -D_DEBUG
 else ifeq ($(BUILD),release)
-    CFLAGS += -O3
+	CFLAGS += -O3
 	CFLAGS += -march=native
 	CFLAGS += -flto
 	CFLAGS += -fomit-frame-pointer
