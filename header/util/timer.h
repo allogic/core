@@ -7,7 +7,6 @@
 #ifdef _MSC_VER
 	#include <windows.h>
 #elif __clang__
-	#define CLOCK_MONOTONIC 1 // TODO
 	#include <time.h>
 #endif // COMPILER_SELECTION
 
@@ -33,10 +32,10 @@
 			int64_t elapsed_ns = ((int64_t)(end.QuadPart) * 1000000000LL - ((int64_t)begin.QuadPart) * 1000000000LL) / ((int64_t)freq.QuadPart); \
 			int64_t elapsed_us = elapsed_ns / 1000LL; \
 			int64_t elapsed_ms = elapsed_ns / 1000000LL; \
-			printf("%s\n", __func__); \
-			printf("\telapsed %zdns\n", elapsed_ns); \
-			printf("\telapsed %zdus\n", elapsed_us); \
-			printf("\telapsed %zdms\n", elapsed_ms); \
+			printf("%s:\n", __func__); \
+			printf("\t[ELAPSED] %zdns\n", elapsed_ns); \
+			printf("\t[ELAPSED] %zdus\n", elapsed_us); \
+			printf("\t[ELAPSED] %zdms\n", elapsed_ms); \
 		}
 #elif __clang__
 	#define TIMER_END() \
@@ -44,10 +43,10 @@
 			int64_t elapsed_ns = (end.tv_sec - begin.tv_sec) * 1000000000LL + (end.tv_nsec - begin.tv_nsec); \
 			int64_t elapsed_us = elapsed_ns / 1000LL; \
 			int64_t elapsed_ms = elapsed_ns / 1000000LL; \
-			printf("%s\n", __func__); \
-			printf("\t elapsed %zdns\n", elapsed_ns); \
-			printf("\t elapsed %zdus\n", elapsed_us); \
-			printf("\t elapsed %zdms\n", elapsed_ms); \
+			printf("%s:\n", __func__); \
+			printf("\t[ELAPSED] %zdns\n", elapsed_ns); \
+			printf("\t[ELAPSED] %zdus\n", elapsed_us); \
+			printf("\t[ELAPSED] %zdms\n", elapsed_ms); \
 		}
 #elif __clang__
 

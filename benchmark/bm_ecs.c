@@ -33,7 +33,7 @@ static void for4_proc(ecs_t* ecs, uint64_t entity, vec_t* view)
 	*dummy3 = 42;
 }
 
-static void bm_create(ecs_t* ecs, vec_t* entities)
+static void bm_create_entity(ecs_t* ecs, vec_t* entities)
 {
 	uint64_t entity_index = 0;
 	uint64_t entity_count = vec_count(entities);
@@ -46,7 +46,7 @@ static void bm_create(ecs_t* ecs, vec_t* entities)
 	}
 	TIMER_END();
 }
-static void bm_attach(ecs_t* ecs, vec_t* entities)
+static void bm_attach_component(ecs_t* ecs, vec_t* entities)
 {
 	uint64_t dummy = 0;
 	uint64_t entity_index = 0;
@@ -60,7 +60,7 @@ static void bm_attach(ecs_t* ecs, vec_t* entities)
 	}
 	TIMER_END();
 }
-static void bm_set(ecs_t* ecs, vec_t* entities)
+static void bm_set_component(ecs_t* ecs, vec_t* entities)
 {
 	uint64_t dummy = 0;
 	uint64_t entity_index = 0;
@@ -74,7 +74,7 @@ static void bm_set(ecs_t* ecs, vec_t* entities)
 	}
 	TIMER_END();
 }
-static void bm_get(ecs_t* ecs, vec_t* entities)
+static void bm_get_component(ecs_t* ecs, vec_t* entities)
 {
 	uint64_t entity_index = 0;
 	uint64_t entity_count = vec_count(entities);
@@ -87,7 +87,7 @@ static void bm_get(ecs_t* ecs, vec_t* entities)
 	}
 	TIMER_END();
 }
-static void bm_detach(ecs_t* ecs, vec_t* entities)
+static void bm_detach_component(ecs_t* ecs, vec_t* entities)
 {
 	uint64_t entity_index = 0;
 	uint64_t entity_count = vec_count(entities);
@@ -100,7 +100,7 @@ static void bm_detach(ecs_t* ecs, vec_t* entities)
 	}
 	TIMER_END();
 }
-static void bm_delete(ecs_t* ecs, vec_t* entities)
+static void bm_delete_entity(ecs_t* ecs, vec_t* entities)
 {
 	uint64_t entity_index = 0;
 	uint64_t entity_count = vec_count(entities);
@@ -130,7 +130,7 @@ static void bm_for4(ecs_t* ecs)
 	vec_free(&view);
 }
 
-int main(void)
+int32_t main(void)
 {
 	heap_prologue();
 	ecs_t ecs = ecs_alloc();
@@ -139,17 +139,12 @@ int main(void)
 	ecs_register(&ecs, 2, sizeof(uint64_t));
 	ecs_register(&ecs, 3, sizeof(uint64_t));
 	vec_t entities = vec_alloc(sizeof(uint64_t));
-
-	printf("\n");
-	printf("TEST 100\n");
-	printf("\n");
-
 	vec_resize(&entities, 100);
-	bm_create(&ecs, &entities);
-	bm_attach(&ecs, &entities);
-	bm_set(&ecs, &entities);
-	bm_get(&ecs, &entities);
-	bm_detach(&ecs, &entities);
+	bm_create_entity(&ecs, &entities);
+	bm_attach_component(&ecs, &entities);
+	bm_set_component(&ecs, &entities);
+	bm_get_component(&ecs, &entities);
+	bm_detach_component(&ecs, &entities);
 	{
 		uint64_t entity_index = 0;
 		uint64_t entity_count = vec_count(&entities);
@@ -166,17 +161,12 @@ int main(void)
 	bm_for2(&ecs);
 	bm_for4(&ecs);
 	ecs_clear(&ecs);
-
-	printf("\n");
-	printf("TEST 10000\n");
-	printf("\n");
-
 	vec_resize(&entities, 10000);
-	bm_create(&ecs, &entities);
-	bm_attach(&ecs, &entities);
-	bm_set(&ecs, &entities);
-	bm_get(&ecs, &entities);
-	bm_detach(&ecs, &entities);
+	bm_create_entity(&ecs, &entities);
+	bm_attach_component(&ecs, &entities);
+	bm_set_component(&ecs, &entities);
+	bm_get_component(&ecs, &entities);
+	bm_detach_component(&ecs, &entities);
 	{
 		uint64_t entity_index = 0;
 		uint64_t entity_count = vec_count(&entities);
@@ -193,17 +183,12 @@ int main(void)
 	bm_for2(&ecs);
 	bm_for4(&ecs);
 	ecs_clear(&ecs);
-
-	printf("\n");
-	printf("TEST 1000000\n");
-	printf("\n");
-
 	vec_resize(&entities, 1000000);
-	bm_create(&ecs, &entities);
-	bm_attach(&ecs, &entities);
-	bm_set(&ecs, &entities);
-	bm_get(&ecs, &entities);
-	bm_detach(&ecs, &entities);
+	bm_create_entity(&ecs, &entities);
+	bm_attach_component(&ecs, &entities);
+	bm_set_component(&ecs, &entities);
+	bm_get_component(&ecs, &entities);
+	bm_detach_component(&ecs, &entities);
 	{
 		uint64_t entity_index = 0;
 		uint64_t entity_count = vec_count(&entities);
@@ -220,7 +205,6 @@ int main(void)
 	bm_for2(&ecs);
 	bm_for4(&ecs);
 	ecs_clear(&ecs);
-
 	vec_free(&entities);
 	ecs_free(&ecs);
 	heap_epilogue();

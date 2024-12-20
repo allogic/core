@@ -29,6 +29,7 @@
 	#define HEAP_FREE(BLOCK) free(BLOCK)
 #endif // _HEAP_TRACE
 
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
@@ -53,6 +54,7 @@ typedef struct _dat_t
 
 extern dat_t dat_alloc(uint64_t value_size);
 extern dat_t dat_copy(dat_t* reference);
+extern uint8_t dat_equal(dat_t* reference);
 extern void dat_set_dense_index(dat_t* dat, uint64_t id, uint64_t index);
 extern uint64_t dat_get_dense_index(dat_t* dat, uint64_t id);
 extern void dat_pages_resize(dat_t* dat, uint64_t page_count);
@@ -66,6 +68,7 @@ extern void dat_clear(dat_t* dat);
 extern uint64_t dat_count(dat_t* dat);
 extern uint64_t dat_id(dat_t* dat, uint64_t index);
 extern void* dat_value(dat_t* dat, uint64_t index);
+extern void dat_print(dat_t* dat);
 extern void dat_free(dat_t* dat);
 
 #ifdef DAT_IMPLEMENTATION
@@ -106,6 +109,11 @@ extern void dat_free(dat_t* dat);
 			page_index++;
 		}
 		return dat;
+	}
+	uint8_t dat_equal(dat_t* reference)
+	{
+		// TODO
+		return 0;
 	}
 	void dat_set_dense_index(dat_t* dat, uint64_t id, uint64_t index)
 	{
@@ -209,8 +217,8 @@ extern void dat_free(dat_t* dat);
 		uint64_t id_count = vec_count(&dat->ids);
 		dat_set_dense_index(dat, id_count - 1, dense_index);
 		dat_set_dense_index(dat, id, DAT_TOMBSTONE);
-		vec_swap(&dat->values, value_count - 1, dense_index);
-		vec_swap(&dat->ids, id_count - 1, dense_index);
+		vec_swap(&dat->values, dense_index, value_count - 1);
+		vec_swap(&dat->ids, dense_index, id_count - 1);
 		vec_pop(&dat->values, 0);
 		vec_pop(&dat->ids, 0);
 	}
@@ -253,6 +261,43 @@ extern void dat_free(dat_t* dat);
 	void* dat_value(dat_t* dat, uint64_t index)
 	{
 		return vec_at(&dat->values, index);
+	}
+	void dat_print(dat_t* dat)
+	{
+		uint64_t page_index = 0;
+		printf("[Direct Access Tree]\n");
+		printf("\tPages [%zu]\n", dat->page_count);
+		while (page_index < dat->page_count)
+		{
+			page_t* page = &dat->pages[page_index];
+			uint64_t sparse_index = 0;
+			printf("\t\tPage [%zu]\n", page->sparse_count);
+			while (sparse_index < page->sparse_count)
+			{
+				printf("\t\t\t[%zu] -> [%zu]\n", sparse_index, page->sparse[sparse_index]);
+				sparse_index++;
+			}
+			printf("\n");
+			page_index++;
+		}
+		uint64_t value_index = 0;
+		uint64_t value_count = vec_count(&dat->values);
+		printf("\tValues [%zu]\n", value_count);
+		while (value_index < value_count)
+		{
+			printf("\t\t[%zu] -> [%p]\n", value_index, vec_at(&dat->values, value_index));
+			value_index++;
+		}
+		printf("\n");
+		uint64_t id_index = 0;
+		uint64_t id_count = vec_count(&dat->ids);
+		printf("\tIds [%zu]\n", id_count);
+		while (id_index < id_count)
+		{
+			printf("\t\t[%zu] -> [%zu]\n", id_index, *(uint64_t*)vec_at(&dat->ids, id_index));
+			id_index++;
+		}
+		printf("\n");
 	}
 	void dat_free(dat_t* dat)
 	{

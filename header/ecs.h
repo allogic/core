@@ -45,6 +45,7 @@
 	#define ECS_TOGGLE_BIT(VALUE, BIT) (((uint64_t)(VALUE)) ^ (((uint64_t)1) << (BIT)))
 #endif // ECS_TOGGLE_BIT
 
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
@@ -56,27 +57,34 @@ typedef struct _ecs_t
 {
 	uint64_t unique_entity;
 	uint64_t active_pools;
+	uint64_t active_pool_count;
 	dat_t masks;
-	vec_t entities;
+	vec_t alloc_entities;
+	vec_t free_entities;
 	vec_t pools;
 } ecs_t;
 
 typedef void (*proc_t)(ecs_t* ecs, uint64_t entity, vec_t* view);
 
 extern ecs_t ecs_alloc(void);
+extern ecs_t ecs_copy(ecs_t* reference);
+extern uint8_t ecs_equal(ecs_t* reference);
 extern uint64_t ecs_create(ecs_t* ecs);
 extern void ecs_delete(ecs_t* ecs, uint64_t entity);
 extern void ecs_register(ecs_t* ecs, uint64_t bit, uint64_t value_size);
+extern void ecs_unregister(ecs_t* ecs, uint64_t bit);
 extern void ecs_attach(ecs_t* ecs, uint64_t entity, uint64_t bit, void const* value);
 extern void ecs_detach(ecs_t* ecs, uint64_t entity, uint64_t bit);
 extern void ecs_set(ecs_t* ecs, uint64_t entity, uint64_t bit, void const* value);
 extern void* ecs_get(ecs_t* ecs, uint64_t entity, uint64_t bit);
 extern vec_t ecs_all(ecs_t* ecs, uint64_t mask);
 extern uint8_t ecs_contains(ecs_t* ecs, uint64_t entity, vec_t* view);
+extern uint64_t ecs_count(ecs_t* ecs);
 extern void* ecs_value(ecs_t* ecs, uint64_t entity, uint64_t bit, vec_t* view);
 extern dat_t* ecs_smallest(ecs_t* ecs, vec_t* view);
 extern void ecs_for(ecs_t* ecs, vec_t* view, proc_t proc);
 extern void ecs_clear(ecs_t* ecs);
+extern void ecs_print(ecs_t* ecs);
 extern void ecs_free(ecs_t* ecs);
 
 #ifdef ECS_IMPLEMENTATION
@@ -85,23 +93,37 @@ extern void ecs_free(ecs_t* ecs);
 		ecs_t ecs;
 		memset(&ecs, 0, sizeof(ecs_t));
 		ecs.masks = dat_alloc(sizeof(uint64_t));
-		ecs.entities = vec_alloc(sizeof(uint64_t));
+		ecs.alloc_entities = vec_alloc(sizeof(uint64_t));
+		ecs.free_entities = vec_alloc(sizeof(uint64_t));
 		ecs.pools = vec_alloc(sizeof(dat_t));
 		vec_resize(&ecs.pools, ECS_MAX_POOLS);
 		return ecs;
 	}
+	ecs_t ecs_copy(ecs_t* reference)
+	{
+		// TODO
+		ecs_t ecs;
+		memset(&ecs, 0, sizeof(ecs_t));
+		return ecs;
+	}
+	uint8_t ecs_equal(ecs_t* reference)
+	{
+		// TODO
+		return 0;
+	}
 	uint64_t ecs_create(ecs_t* ecs)
 	{
 		uint64_t entity = ECS_INVALID_ENTITY;
-		uint64_t entity_count = vec_count(&ecs->entities);
-		if (entity_count)
+		uint64_t free_entity_count = vec_count(&ecs->free_entities);
+		if (free_entity_count)
 		{
-			vec_pop(&ecs->entities, &entity);
+			vec_pop(&ecs->free_entities, &entity);
 		}
 		else
 		{
 			entity = ecs->unique_entity++;
 		}
+		vec_push(&ecs->alloc_entities, &entity);
 		uint64_t mask = 0;
 		dat_set(&ecs->masks, entity, &mask);
 		return entity;
@@ -120,7 +142,8 @@ extern void ecs_free(ecs_t* ecs);
 			bit++;
 		}
 		dat_remove(&ecs->masks, entity);
-		vec_push(&ecs->entities, &entity);
+		vec_remove(&ecs->alloc_entities, &entity); // TODO
+		vec_push(&ecs->free_entities, &entity);
 	}
 	void ecs_register(ecs_t* ecs, uint64_t bit, uint64_t value_size)
 	{
@@ -128,9 +151,15 @@ extern void ecs_free(ecs_t* ecs);
 		if (ECS_IS_BIT_SET(ecs->active_pools, bit))
 		{
 			dat_free(pool);
+			ecs->active_pool_count--;
 		}
 		ecs->active_pools = ECS_SET_BIT(ecs->active_pools, bit);
+		ecs->active_pool_count++;
 		*pool = dat_alloc(value_size);
+	}
+	void ecs_unregister(ecs_t* ecs, uint64_t bit)
+	{
+		// TODO
 	}
 	void ecs_attach(ecs_t* ecs, uint64_t entity, uint64_t bit, void const* value)
 	{
@@ -188,6 +217,10 @@ extern void ecs_free(ecs_t* ecs);
 		}
 		return 1;
 	}
+	uint64_t ecs_count(ecs_t* ecs)
+	{
+		return vec_count(&ecs->alloc_entities);
+	}
 	void* ecs_value(ecs_t* ecs, uint64_t entity, uint64_t bit, vec_t* view)
 	{
 		dat_t* pool = *(dat_t**)vec_at(view, bit);
@@ -227,34 +260,76 @@ extern void ecs_free(ecs_t* ecs);
 	}
 	void ecs_clear(ecs_t* ecs)
 	{
-		uint64_t pool_index = 0;
-		while (pool_index < ECS_MAX_POOLS)
+		uint64_t bit = 0;
+		while (bit < ECS_MAX_POOLS)
 		{
-			if (ECS_IS_BIT_SET(ecs->active_pools, pool_index))
+			if (ECS_IS_BIT_SET(ecs->active_pools, bit))
 			{
-				dat_t* pool = (dat_t*)vec_at(&ecs->pools, pool_index);
+				dat_t* pool = (dat_t*)vec_at(&ecs->pools, bit);
 				dat_clear(pool);
 			}
-			pool_index++;
+			bit++;
 		}
 		ecs->unique_entity = 0;
 		dat_clear(&ecs->masks);
-		vec_clear(&ecs->entities);
+		vec_clear(&ecs->alloc_entities);
+		vec_clear(&ecs->free_entities);
+	}
+	void ecs_print(ecs_t* ecs)
+	{
+		printf("entity_component_system:\n");
+		printf("\tunique_entity: %zu\n", ecs->unique_entity);
+		printf("\tactive_pools: %zu\n", ecs->active_pool_count);
+		printf("\t\t[");
+		uint64_t bit;
+		bit = 0;
+		while (bit < ECS_MAX_POOLS)
+		{
+			printf("%3zu", 64 - bit);
+			bit++;
+		}
+		printf("]\n");
+		printf("\t\t[");
+		bit = 0;
+		while (bit < ECS_MAX_POOLS)
+		{
+			printf("%3zu", ECS_IS_BIT_SET(ecs->active_pools, 65 - bit));
+			bit++;
+		}
+		printf("]\n");
+		uint64_t entity_index;
+		uint64_t alloc_entity_count = vec_count(&ecs->alloc_entities);
+		uint64_t free_entity_count = vec_count(&ecs->free_entities);
+		printf("\talloc_entities: %zu\n", alloc_entity_count);
+		entity_index = 0;
+		while (entity_index < alloc_entity_count)
+		{
+			printf("\t\t%zu -> %zu\n", entity_index, *(uint64_t*)vec_at(&ecs->alloc_entities, entity_index));
+			entity_index++;
+		}
+		printf("\tfree_entities: %zu\n", free_entity_count);
+		entity_index = 0;
+		while (entity_index < free_entity_count)
+		{
+			printf("\t\t%zu -> %zu\n", entity_index, *(uint64_t*)vec_at(&ecs->free_entities, entity_index));
+			entity_index++;
+		}
 	}
 	void ecs_free(ecs_t* ecs)
 	{
-		uint64_t pool_index = 0;
-		while (pool_index < ECS_MAX_POOLS)
+		uint64_t bit = 0;
+		while (bit < ECS_MAX_POOLS)
 		{
-			if (ECS_IS_BIT_SET(ecs->active_pools, pool_index))
+			if (ECS_IS_BIT_SET(ecs->active_pools, bit))
 			{
-				dat_t* pool = (dat_t*)vec_at(&ecs->pools, pool_index);
+				dat_t* pool = (dat_t*)vec_at(&ecs->pools, bit);
 				dat_free(pool);
 			}
-			pool_index++;
+			bit++;
 		}
 		dat_free(&ecs->masks);
-		vec_free(&ecs->entities);
+		vec_free(&ecs->alloc_entities);
+		vec_free(&ecs->free_entities);
 		vec_free(&ecs->pools);
 		memset(ecs, 0, sizeof(ecs_t));
 	}
