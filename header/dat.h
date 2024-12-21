@@ -53,8 +53,8 @@ typedef struct _dat_t
 } dat_t;
 
 extern dat_t dat_alloc(uint64_t value_size);
-extern dat_t dat_copy(dat_t* reference);
-extern uint8_t dat_equal(dat_t* reference);
+extern dat_t dat_copy(dat_t* ref);
+extern uint8_t dat_equal(dat_t* ref);
 extern void dat_set_dense_index(dat_t* dat, uint64_t id, uint64_t index);
 extern uint64_t dat_get_dense_index(dat_t* dat, uint64_t id);
 extern void dat_pages_resize(dat_t* dat, uint64_t page_count);
@@ -83,19 +83,19 @@ extern void dat_free(dat_t* dat);
 		dat.ids = vec_alloc(sizeof(uint64_t));
 		return dat;
 	}
-	dat_t dat_copy(dat_t* reference)
+	dat_t dat_copy(dat_t* ref)
 	{
 		dat_t dat;
 		memset(&dat, 0, sizeof(dat_t));
-		dat.pages = (page_t*)HEAP_ALLOC(reference->page_size);
-		dat.page_size = reference->page_size;
-		dat.page_count = reference->page_count;
-		dat.values = vec_copy(&reference->values);
-		dat.ids = vec_copy(&reference->ids);
+		dat.pages = (page_t*)HEAP_ALLOC(ref->page_size);
+		dat.page_size = ref->page_size;
+		dat.page_count = ref->page_count;
+		dat.values = vec_copy(&ref->values);
+		dat.ids = vec_copy(&ref->ids);
 		uint64_t page_index = 0;
 		while (page_index < dat.page_count)
 		{
-			page_t* ref_page = &reference->pages[page_index];
+			page_t* ref_page = &ref->pages[page_index];
 			page_t* new_page = &dat.pages[page_index];
 			new_page->sparse = (uint64_t*)HEAP_ALLOC(ref_page->sparse_size);
 			new_page->sparse_size = ref_page->sparse_size;
@@ -110,7 +110,7 @@ extern void dat_free(dat_t* dat);
 		}
 		return dat;
 	}
-	uint8_t dat_equal(dat_t* reference)
+	uint8_t dat_equal(dat_t* ref)
 	{
 		// TODO
 		return 0;

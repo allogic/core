@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <math.h>
 
 #ifdef TEST_VERBOSE
 	#define TEST_BEGIN() printf("%s:\n", __func__)
@@ -16,12 +17,12 @@
 	#define TEST_LOG(FMT, ...)
 #endif // TEST_VERBOSE
 
-#define TEST_INT_EQUALS(EXPR, EXPECTED) \
+#define TEST_INT_LEQ(EXPR, EXPECTED) \
 	{ \
 		int64_t v = (EXPR); \
-		uint64_t p = v == (EXPECTED); \
+		int64_t e = (EXPECTED); \
 		g_tests_total++; \
-		if (p) \
+		if (v <= e) \
 		{ \
 			g_tests_passed++; \
 		} \
@@ -29,15 +30,15 @@
 		{ \
 			g_tests_failed++; \
 		} \
-		TEST_LOG("\t[%s] " #EXPR " (%zd == " #EXPECTED ")\n", (p ? "PASSED" : "ERROR"), v); \
+		TEST_LOG("\t[%s] " #EXPR " (%zd <= %zd)\n", ((v <= e) ? "PASSED" : "ERROR"), v, e); \
 	}
 
-#define TEST_STR_EQUALS(EXPR, EXPECTED) \
+#define TEST_INT_EQ(EXPR, EXPECTED) \
 	{ \
-		char const* v = (EXPR); \
-		uint64_t p = strcmp(v, (EXPECTED)) == 0; \
+		int64_t v = (EXPR); \
+		int64_t e = (EXPECTED); \
 		g_tests_total++; \
-		if (p) \
+		if (v == e) \
 		{ \
 			g_tests_passed++; \
 		} \
@@ -45,7 +46,87 @@
 		{ \
 			g_tests_failed++; \
 		} \
-		TEST_LOG("\t[%s] " #EXPR " (\"%s\" == \"%s\")\n", (p ? "PASSED" : "ERROR"), (strlen(v) ? v : ""), (strlen(EXPECTED) ? EXPECTED : "")); \
+		TEST_LOG("\t[%s] " #EXPR " (%zd == %zd)\n", ((v == e) ? "PASSED" : "ERROR"), v, e); \
+	}
+
+#define TEST_INT_GEQ(EXPR, EXPECTED) \
+	{ \
+		int64_t v = (EXPR); \
+		int64_t e = (EXPECTED); \
+		g_tests_total++; \
+		if (v >= e) \
+		{ \
+			g_tests_passed++; \
+		} \
+		else \
+		{ \
+			g_tests_failed++; \
+		} \
+		TEST_LOG("\t[%s] " #EXPR " (%zd >= %zd)\n", ((v >= e) ? "PASSED" : "ERROR"), v, e); \
+	}
+
+#define TEST_FLT_LEQ(EXPR, EXPECTED) \
+	{ \
+		double_t v = (EXPR); \
+		double_t e = (EXPECTED); \
+		g_tests_total++; \
+		if (v <= e) \
+		{ \
+			g_tests_passed++; \
+		} \
+		else \
+		{ \
+			g_tests_failed++; \
+		} \
+		TEST_LOG("\t[%s] " #EXPR " (%f <= %f)\n", ((v <= e) ? "PASSED" : "ERROR"), v, e); \
+	}
+
+#define TEST_FLT_EQ(EXPR, EXPECTED) \
+	{ \
+		double_t v = (EXPR); \
+		double_t e = (EXPECTED); \
+		g_tests_total++; \
+		if (v == e) \
+		{ \
+			g_tests_passed++; \
+		} \
+		else \
+		{ \
+			g_tests_failed++; \
+		} \
+		TEST_LOG("\t[%s] " #EXPR " (%f == %f)\n", ((v == e) ? "PASSED" : "ERROR"), v, e); \
+	}
+
+#define TEST_FLT_GEQ(EXPR, EXPECTED) \
+	{ \
+		double_t v = (EXPR); \
+		double_t e = (EXPECTED); \
+		g_tests_total++; \
+		if (v >= e) \
+		{ \
+			g_tests_passed++; \
+		} \
+		else \
+		{ \
+			g_tests_failed++; \
+		} \
+		TEST_LOG("\t[%s] " #EXPR " (%f >= %f)\n", ((v >= e) ? "PASSED" : "ERROR"), v, e); \
+	}
+
+#define TEST_STR_EQ(EXPR, EXPECTED) \
+	{ \
+		char const* v = (EXPR); \
+		char const* e = (EXPECTED); \
+		g_tests_total++; \
+		if (strcmp(v, e) == 0) \
+		{ \
+			g_tests_passed++; \
+		} \
+		else \
+		{ \
+			g_tests_failed++; \
+		} \
+		TEST_LOG("\t[%s] " #EXPR " (\"%s\" == \"%s\")\n", ((strcmp(v, e) == 0) ? "PASSED" : "ERROR"), (strlen(v) ? v : ""), (strlen(e) ? e : "")); \
 	}
 
 #ifdef TEST_VERBOSE

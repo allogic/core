@@ -2,6 +2,8 @@
 
 tst_str
 tst_vec
+tst_set
+tst_map
 tst_ecs
 
 bm_ecs

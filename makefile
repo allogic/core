@@ -30,6 +30,8 @@ endif
 
 TESTS += tst_str
 TESTS += tst_vec
+TESTS += tst_set
+TESTS += tst_map
 TESTS += tst_ecs
 
 BENCHMARKS += bm_ecs
@@ -42,6 +44,8 @@ clean:
 tests: $(TESTS)
 	./tst_str
 	./tst_vec
+	./tst_set
+	./tst_map
 	./tst_ecs
 
 benchmarks: $(BENCHMARKS)
@@ -51,6 +55,12 @@ tst_str: test/tst_str.c
 	$(CC) -o $@ $(CFLAGS) $<
 
 tst_vec: test/tst_vec.c
+	$(CC) -o $@ $(CFLAGS) $<
+
+tst_set: test/tst_set.c
+	$(CC) -o $@ $(CFLAGS) $<
+
+tst_map: test/tst_map.c
 	$(CC) -o $@ $(CFLAGS) $<
 
 tst_ecs: test/tst_ecs.c

@@ -33,10 +33,10 @@
 	#define MIN(A, B) (((A) < (B)) ? (A) : (B))
 #endif // MIN
 
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
-#include <assert.h>
 
 typedef struct _map_pair_t
 {
@@ -44,6 +44,7 @@ typedef struct _map_pair_t
 	uint8_t* key;
 	uint64_t key_size;
 	uint8_t* value;
+	uint64_t value_size;
 } map_pair_t;
 
 typedef struct _map_t
@@ -52,22 +53,27 @@ typedef struct _map_t
 	uint64_t table_size;
 	uint64_t table_count;
 	uint64_t pair_count;
-	uint64_t value_size;
 } map_t;
 
-extern map_t map_alloc(uint64_t value_size);
-extern map_t map_copy(map_t* reference);
-extern uint8_t map_insert(map_t* map, void const* key, uint64_t key_size, void const* value);
-extern uint8_t map_remove(map_t* map, void const* key, uint64_t key_size, void* value);
+extern map_t map_alloc(void);
+extern map_t map_copy(map_t* ref);
+extern uint8_t map_equal(map_t* map, map_t* ref);
+extern uint8_t map_insert(map_t* map, void const* key, uint64_t key_size, void const* value, uint64_t value_size);
+extern uint8_t map_remove(map_t* map, void const* key, uint64_t key_size, void* value, uint64_t value_size);
 extern uint8_t map_contains(map_t* map, void const* key, uint64_t key_size);
+extern uint64_t map_table_size(map_t* map);
+extern uint64_t map_table_count(map_t* map);
 extern uint64_t map_count(map_t* map);
 extern void* map_at(map_t* map, void const* key, uint64_t key_size);
 extern void map_expand(map_t* map);
-extern uint64_t map_hash(void const* key, uint64_t key_size, uint64_t modulus);
+extern void map_clear(map_t* map);
+extern uint64_t map_hash(map_t* map, void const* key, uint64_t key_size, uint64_t modulus);
+extern float_t map_load_factor(map_t* map);
+extern void map_print(map_t* map);
 extern void map_free(map_t* map);
 
 #ifdef MAP_IMPLEMENTATION
-	map_t map_alloc(uint64_t value_size)
+	map_t map_alloc(void)
 	{
 		map_t map;
 		memset(&map, 0, sizeof(map_t));
@@ -75,50 +81,79 @@ extern void map_free(map_t* map);
 		map.table_size = MAP_TABLE_COUNT * sizeof(map_pair_t*);
 		map.table_count = MAP_TABLE_COUNT;
 		map.pair_count = 0;
-		map.value_size = value_size;
 		memset(map.table, 0, MAP_TABLE_COUNT * sizeof(map_pair_t*));
 		return map;
 	}
-	map_t map_copy(map_t* reference)
+	map_t map_copy(map_t* ref)
 	{
-		assert(reference->table);
 		map_t map;
 		memset(&map, 0, sizeof(map_t));
-		map.table = (map_pair_t**)HEAP_ALLOC(reference->table_size);
-		map.table_size = reference->table_size;
-		map.table_count = reference->table_count;
-		map.pair_count = reference->pair_count;
-		map.value_size = reference->value_size;
-		memset(map.table, 0, reference->table_size);
+		map.table = (map_pair_t**)HEAP_ALLOC(ref->table_size);
+		map.table_size = ref->table_size;
+		map.table_count = ref->table_count;
+		map.pair_count = ref->pair_count;
+		memset(map.table, 0, ref->table_size);
 		uint64_t table_index = 0;
 		while (table_index < map.table_count)
 		{
-			map_pair_t* ref_curr = reference->table[table_index];
-			map_pair_t* new_curr = map.table[table_index];
+			map_pair_t* ref_curr = ref->table[table_index];
+			map_pair_t* curr = map.table[table_index];
 			if (ref_curr)
 			{
-				uint64_t hash = map_hash(ref_curr->key, ref_curr->key_size, map.table_count);
-				new_curr = (map_pair_t*)HEAP_ALLOC(sizeof(map_pair_t));
-				memset(new_curr, 0, sizeof(map_pair_t));
-				new_curr->next = map.table[hash];
-				new_curr->key = (uint8_t*)HEAP_ALLOC(ref_curr->key_size);
-				new_curr->value = (uint8_t*)HEAP_ALLOC(map.value_size);
-				new_curr->key_size = ref_curr->key_size;
-				memcpy(new_curr->key, ref_curr->key, ref_curr->key_size);
-				memcpy(new_curr->value, ref_curr->value, map.value_size);
+				uint64_t hash = map_hash(&map, ref_curr->key, ref_curr->key_size, map.table_count);
+				curr = (map_pair_t*)HEAP_ALLOC(sizeof(map_pair_t));
+				memset(curr, 0, sizeof(map_pair_t));
+				curr->next = map.table[hash];
+				curr->key = (uint8_t*)HEAP_ALLOC(ref_curr->key_size);
+				curr->value = (uint8_t*)HEAP_ALLOC(ref_curr->value_size);
+				curr->key_size = ref_curr->key_size;
+				curr->value_size = ref_curr->value_size;
+				memcpy(curr->key, ref_curr->key, ref_curr->key_size);
+				memcpy(curr->value, ref_curr->value, ref_curr->value_size);
+				map.table[hash] = curr;
 			}
 			table_index++;
 		}
 		return map;
 	}
-	uint8_t map_insert(map_t* map, void const* key, uint64_t key_size, void const* value)
+	uint8_t map_equal(map_t* map, map_t* ref)
+	{
+		uint8_t not_equal = 0;
+		not_equal |= map->pair_count != ref->pair_count;
+		if (map->pair_count == ref->pair_count)
+		{
+			uint64_t table_index = 0;
+			while (table_index < map->table_count)
+			{
+				map_pair_t* ref_curr = ref->table[table_index];
+				map_pair_t* curr = map->table[table_index];
+				not_equal |= (ref_curr == 0) != (curr == 0);
+				while (curr && ref_curr)
+				{
+					not_equal |= curr->key_size != ref_curr->key_size;
+					not_equal |= curr->value_size != ref_curr->value_size;
+					if (not_equal == 0)
+					{
+						not_equal |= memcmp(curr->key, ref_curr->key, MIN(curr->key_size, ref_curr->key_size));
+						not_equal |= memcmp(curr->value, ref_curr->value, MIN(curr->value_size, ref_curr->value_size));
+					}
+					ref_curr = ref_curr->next;
+					curr = curr->next;
+				}
+				table_index++;
+			}
+		}
+		return not_equal == 0;
+	}
+	uint8_t map_insert(map_t* map, void const* key, uint64_t key_size, void const* value, uint64_t value_size)
 	{
 		uint8_t key_exists = 0;
-		if ((((float_t)(map->pair_count + 1)) / (float_t)map->table_count) > MAP_LOAD_FACTOR)
+		float_t load_factor = map_load_factor(map);
+		if (load_factor > MAP_LOAD_FACTOR)
 		{
 			map_expand(map);
 		}
-		uint64_t hash = map_hash(key, key_size, map->table_count);
+		uint64_t hash = map_hash(map, key, key_size, map->table_count);
 		map_pair_t* curr = map->table[hash];
 		while (curr)
 		{
@@ -135,18 +170,25 @@ extern void map_free(map_t* map);
 			memset(curr, 0, sizeof(map_pair_t));
 			curr->next = map->table[hash];
 			curr->key = (uint8_t*)HEAP_ALLOC(key_size);
-			curr->value = (uint8_t*)HEAP_ALLOC(map->value_size);
+			if (value)
+			{
+				curr->value = (uint8_t*)HEAP_ALLOC(value_size);
+			}
 			curr->key_size = key_size;
 			memcpy(curr->key, key, key_size);
-			memcpy(curr->value, value, map->value_size);
+			if (value)
+			{
+				memcpy(curr->value, value, value_size);
+			}
+			curr->value_size = value_size;
 			map->table[hash] = curr;
 			map->pair_count++;
 		}
 		return key_exists;
 	}
-	uint8_t map_remove(map_t* map, void const* key, uint64_t key_size, void* value)
+	uint8_t map_remove(map_t* map, void const* key, uint64_t key_size, void* value, uint64_t value_size)
 	{
-		uint64_t hash = map_hash(key, key_size, map->table_count);
+		uint64_t hash = map_hash(map, key, key_size, map->table_count);
 		map_pair_t* curr = map->table[hash];
 		map_pair_t* prev = 0;
 		while (curr)
@@ -161,7 +203,10 @@ extern void map_free(map_t* map);
 				{
 					map->table[hash] = curr->next;
 				}
-				memcpy(value, curr->value, map->value_size);
+				if (value)
+				{
+					memcpy(value, curr->value, MIN(value_size, curr->value_size));
+				}
 				HEAP_FREE(curr->key);
 				HEAP_FREE(curr->value);
 				HEAP_FREE(curr);
@@ -175,7 +220,7 @@ extern void map_free(map_t* map);
 	}
 	uint8_t map_contains(map_t* map, void const* key, uint64_t key_size)
 	{
-		uint64_t hash = map_hash(key, key_size, map->table_count);
+		uint64_t hash = map_hash(map, key, key_size, map->table_count);
 		map_pair_t* curr = map->table[hash];
 		while (curr)
 		{
@@ -187,13 +232,21 @@ extern void map_free(map_t* map);
 		}
 		return 0;
 	}
-	uint64_t map_count(map_t* map)
+	uint64_t map_table_size(map_t* map)
+	{
+		return map->table_size;
+	}
+	uint64_t map_table_count(map_t* map)
 	{
 		return map->table_count;
 	}
+	uint64_t map_count(map_t* map)
+	{
+		return map->pair_count;
+	}
 	void* map_at(map_t* map, void const* key, uint64_t key_size)
 	{
-		uint64_t hash = map_hash(key, key_size, map->table_count);
+		uint64_t hash = map_hash(map, key, key_size, map->table_count);
 		map_pair_t* curr = map->table[hash];
 		while (curr)
 		{
@@ -208,28 +261,47 @@ extern void map_free(map_t* map);
 	void map_expand(map_t* map)
 	{
 		uint64_t table_index = 0;
-		uint64_t new_table_size = map->table_size * 2;
-		uint64_t new_table_count = map->table_count * 2;
-		map_pair_t** new_table = (map_pair_t**)HEAP_ALLOC(new_table_size);
-		memset(new_table, 0, new_table_size);
+		uint64_t table_size = map->table_size * 2;
+		uint64_t table_count = map->table_count * 2;
+		map_pair_t** table = (map_pair_t**)HEAP_ALLOC(table_size);
+		memset(table, 0, table_size);
 		while (table_index < map->table_count)
 		{
 			map_pair_t* curr = map->table[table_index];
 			while (curr)
 			{
-				uint64_t hash = map_hash(curr->key, curr->key_size, new_table_count);
-				curr->next = new_table[hash];
-				new_table[hash] = curr;
+				uint64_t hash = map_hash(map, curr->key, curr->key_size, table_count);
+				curr->next = table[hash];
+				table[hash] = curr;
 				curr = curr->next;
 			}
 			table_index++;
 		}
 		HEAP_FREE(map->table);
-		map->table = new_table;
-		map->table_size = new_table_size;
-		map->table_count = new_table_count;
+		map->table = table;
+		map->table_size = table_size;
+		map->table_count = table_count;
 	}
-	uint64_t map_hash(void const* key, uint64_t key_size, uint64_t modulus)
+	void map_clear(map_t* map)
+	{
+		uint64_t table_index = 0;
+		while (table_index < map->table_count)
+		{
+			map_pair_t* curr = map->table[table_index];
+			while (curr)
+			{
+				map_pair_t* tmp = curr;
+				curr = curr->next;
+				HEAP_FREE(tmp->key);
+				HEAP_FREE(tmp->value);
+				HEAP_FREE(tmp);
+			}
+			table_index++;
+		}
+		memset(map->table, 0, map->table_size);
+		map->pair_count = 0;
+	}
+	uint64_t map_hash(map_t* map, void const* key, uint64_t key_size, uint64_t modulus)
 	{
 		uint64_t hash = MAP_HASH_VALUE;
 		uint64_t key_index = 0;
@@ -239,6 +311,29 @@ extern void map_free(map_t* map);
 			key_index++;
 		}
 		return hash % modulus;
+	}
+	float_t map_load_factor(map_t* map)
+	{
+		return ((float_t)(map->pair_count + 1)) / (float_t)map->table_count;
+	}
+	void map_print(map_t* map)
+	{
+		printf("map:\n");
+		printf("\ttable_size: %zu\n", map->table_size);
+		printf("\ttable_count: %zu\n", map->table_count);
+		printf("\tpair_count: %zu\n", map->pair_count);
+		printf("\ttable:\n");
+		uint64_t table_index = 0;
+		while (table_index < map->table_count)
+		{
+			map_pair_t* curr = map->table[table_index];
+			while (curr)
+			{
+				printf("\t\t%s -> %s\n", (char const*)curr->key, (char const*)curr->value);
+				curr = curr->next;
+			}
+			table_index++;
+		}
 	}
 	void map_free(map_t* map)
 	{

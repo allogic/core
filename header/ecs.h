@@ -67,8 +67,8 @@ typedef struct _ecs_t
 typedef void (*proc_t)(ecs_t* ecs, uint64_t entity, vec_t* view);
 
 extern ecs_t ecs_alloc(void);
-extern ecs_t ecs_copy(ecs_t* reference);
-extern uint8_t ecs_equal(ecs_t* reference);
+extern ecs_t ecs_copy(ecs_t* ref);
+extern uint8_t ecs_equal(ecs_t* ref);
 extern uint64_t ecs_create(ecs_t* ecs);
 extern void ecs_delete(ecs_t* ecs, uint64_t entity);
 extern void ecs_register(ecs_t* ecs, uint64_t bit, uint64_t value_size);
@@ -99,14 +99,14 @@ extern void ecs_free(ecs_t* ecs);
 		vec_resize(&ecs.pools, ECS_MAX_POOLS);
 		return ecs;
 	}
-	ecs_t ecs_copy(ecs_t* reference)
+	ecs_t ecs_copy(ecs_t* ref)
 	{
 		// TODO
 		ecs_t ecs;
 		memset(&ecs, 0, sizeof(ecs_t));
 		return ecs;
 	}
-	uint8_t ecs_equal(ecs_t* reference)
+	uint8_t ecs_equal(ecs_t* ref)
 	{
 		// TODO
 		return 0;

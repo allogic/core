@@ -33,10 +33,10 @@
 	#define MIN(A, B) (((A) < (B)) ? (A) : (B))
 #endif // MIN
 
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
-#include <assert.h>
 
 typedef struct _set_pair_t
 {
@@ -54,13 +54,19 @@ typedef struct _set_t
 } set_t;
 
 extern set_t set_alloc(void);
-extern set_t set_copy(set_t* reference);
+extern set_t set_copy(set_t* ref);
+extern uint8_t set_equal(set_t* set, set_t* ref);
 extern uint8_t set_insert(set_t* set, void const* key, uint64_t key_size);
 extern uint8_t set_remove(set_t* set, void const* key, uint64_t key_size);
 extern uint8_t set_contains(set_t* set, void const* key, uint64_t key_size);
+extern uint64_t set_table_size(set_t* set);
+extern uint64_t set_table_count(set_t* set);
 extern uint64_t set_count(set_t* set);
 extern void set_expand(set_t* set);
-extern uint64_t set_hash(void const* key, uint64_t key_size, uint64_t modulus);
+extern void set_clear(set_t* set);
+extern uint64_t set_hash(set_t* set, void const* key, uint64_t key_size, uint64_t modulus);
+extern float_t set_load_factor(set_t* set);
+extern void set_print(set_t* set);
 extern void set_free(set_t* set);
 
 #ifdef SET_IMPLEMENTATION
@@ -75,43 +81,71 @@ extern void set_free(set_t* set);
 		memset(set.table, 0, SET_TABLE_COUNT * sizeof(set_pair_t*));
 		return set;
 	}
-	set_t set_copy(set_t* reference)
+	set_t set_copy(set_t* ref)
 	{
-		assert(reference->table);
 		set_t set;
 		memset(&set, 0, sizeof(set_t));
-		set.table = (set_pair_t**)HEAP_ALLOC(reference->table_size);
-		set.table_size = reference->table_size;
-		set.table_count = reference->table_count;
-		set.pair_count = reference->pair_count;
-		memset(set.table, 0, reference->table_size);
+		set.table = (set_pair_t**)HEAP_ALLOC(ref->table_size);
+		set.table_size = ref->table_size;
+		set.table_count = ref->table_count;
+		set.pair_count = ref->pair_count;
+		memset(set.table, 0, ref->table_size);
 		uint64_t table_index = 0;
 		while (table_index < set.table_count)
 		{
-			set_pair_t* ref_curr = reference->table[table_index];
-			set_pair_t* new_curr = set.table[table_index];
+			set_pair_t* ref_curr = ref->table[table_index];
+			set_pair_t* curr = set.table[table_index];
 			if (ref_curr)
 			{
-				uint64_t hash = set_hash(ref_curr->key, ref_curr->key_size, set.table_count);
-				new_curr = (set_pair_t*)HEAP_ALLOC(sizeof(set_pair_t));
-				memset(new_curr, 0, sizeof(set_pair_t));
-				new_curr->next = set.table[hash];
-				new_curr->key = (uint8_t*)HEAP_ALLOC(ref_curr->key_size);
-				new_curr->key_size = ref_curr->key_size;
-				memcpy(new_curr->key, ref_curr->key, ref_curr->key_size);
+				uint64_t hash = set_hash(&set, ref_curr->key, ref_curr->key_size, set.table_count);
+				curr = (set_pair_t*)HEAP_ALLOC(sizeof(set_pair_t));
+				memset(curr, 0, sizeof(set_pair_t));
+				curr->next = set.table[hash];
+				curr->key = (uint8_t*)HEAP_ALLOC(ref_curr->key_size);
+				curr->key_size = ref_curr->key_size;
+				memcpy(curr->key, ref_curr->key, ref_curr->key_size);
+				set.table[hash] = curr;
 			}
 			table_index++;
 		}
 		return set;
 	}
+	uint8_t set_equal(set_t* set, set_t* ref)
+	{
+		uint8_t not_equal = 0;
+		not_equal |= set->pair_count != ref->pair_count;
+		if (set->pair_count == ref->pair_count)
+		{
+			uint64_t table_index = 0;
+			while (table_index < set->table_count)
+			{
+				set_pair_t* ref_curr = ref->table[table_index];
+				set_pair_t* curr = set->table[table_index];
+				not_equal |= (ref_curr == 0) != (curr == 0);
+				while (curr && ref_curr)
+				{
+					not_equal |= curr->key_size != ref_curr->key_size;
+					if (not_equal == 0)
+					{
+						not_equal |= memcmp(curr->key, ref_curr->key, MIN(curr->key_size, ref_curr->key_size));
+					}
+					ref_curr = ref_curr->next;
+					curr = curr->next;
+				}
+				table_index++;
+			}
+		}
+		return not_equal == 0;
+	}
 	uint8_t set_insert(set_t* set, void const* key, uint64_t key_size)
 	{
 		uint8_t key_exists = 0;
-		if ((((float_t)(set->pair_count + 1)) / (float_t)set->table_count) > SET_LOAD_FACTOR)
+		float_t load_factor = set_load_factor(set);
+		if (load_factor > SET_LOAD_FACTOR)
 		{
 			set_expand(set);
 		}
-		uint64_t hash = set_hash(key, key_size, set->table_count);
+		uint64_t hash = set_hash(set, key, key_size, set->table_count);
 		set_pair_t* curr = set->table[hash];
 		while (curr)
 		{
@@ -137,7 +171,7 @@ extern void set_free(set_t* set);
 	}
 	uint8_t set_remove(set_t* set, void const* key, uint64_t key_size)
 	{
-		uint64_t hash = set_hash(key, key_size, set->table_count);
+		uint64_t hash = set_hash(set, key, key_size, set->table_count);
 		set_pair_t* curr = set->table[hash];
 		set_pair_t* prev = 0;
 		while (curr)
@@ -164,7 +198,7 @@ extern void set_free(set_t* set);
 	}
 	uint8_t set_contains(set_t* set, void const* key, uint64_t key_size)
 	{
-		uint64_t hash = set_hash(key, key_size, set->table_count);
+		uint64_t hash = set_hash(set, key, key_size, set->table_count);
 		set_pair_t* curr = set->table[hash];
 		while (curr)
 		{
@@ -176,35 +210,61 @@ extern void set_free(set_t* set);
 		}
 		return 0;
 	}
-	uint64_t set_count(set_t* set)
+	uint64_t set_table_size(set_t* set)
+	{
+		return set->table_size;
+	}
+	uint64_t set_table_count(set_t* set)
 	{
 		return set->table_count;
+	}
+	uint64_t set_count(set_t* set)
+	{
+		return set->pair_count;
 	}
 	void set_expand(set_t* set)
 	{
 		uint64_t table_index = 0;
-		uint64_t new_table_size = set->table_size * 2;
-		uint64_t new_table_count = set->table_count * 2;
-		set_pair_t** new_table = (set_pair_t**)HEAP_ALLOC(new_table_size);
-		memset(new_table, 0, new_table_size);
+		uint64_t table_size = set->table_size * 2;
+		uint64_t table_count = set->table_count * 2;
+		set_pair_t** table = (set_pair_t**)HEAP_ALLOC(table_size);
+		memset(table, 0, table_size);
 		while (table_index < set->table_count)
 		{
 			set_pair_t* curr = set->table[table_index];
 			while (curr)
 			{
-				uint64_t hash = set_hash(curr->key, curr->key_size, new_table_count);
-				curr->next = new_table[hash];
-				new_table[hash] = curr;
+				uint64_t hash = set_hash(set, curr->key, curr->key_size, table_count);
+				curr->next = table[hash];
+				table[hash] = curr;
 				curr = curr->next;
 			}
 			table_index++;
 		}
 		HEAP_FREE(set->table);
-		set->table = new_table;
-		set->table_size = new_table_size;
-		set->table_count = new_table_count;
+		set->table = table;
+		set->table_size = table_size;
+		set->table_count = table_count;
 	}
-	uint64_t set_hash(void const* key, uint64_t key_size, uint64_t modulus)
+	void set_clear(set_t* set)
+	{
+		uint64_t table_index = 0;
+		while (table_index < set->table_count)
+		{
+			set_pair_t* curr = set->table[table_index];
+			while (curr)
+			{
+				set_pair_t* tmp = curr;
+				curr = curr->next;
+				HEAP_FREE(tmp->key);
+				HEAP_FREE(tmp);
+			}
+			table_index++;
+		}
+		memset(set->table, 0, set->table_size);
+		set->pair_count = 0;
+	}
+	uint64_t set_hash(set_t* set, void const* key, uint64_t key_size, uint64_t modulus)
 	{
 		uint64_t hash = SET_HASH_VALUE;
 		uint64_t key_index = 0;
@@ -214,6 +274,29 @@ extern void set_free(set_t* set);
 			key_index++;
 		}
 		return hash % modulus;
+	}
+	float_t set_load_factor(set_t* set)
+	{
+		return ((float_t)(set->pair_count + 1)) / (float_t)set->table_count;
+	}
+	void set_print(set_t* set)
+	{
+		printf("set:\n");
+		printf("\ttable_size: %zu\n", set->table_size);
+		printf("\ttable_count: %zu\n", set->table_count);
+		printf("\tpair_count: %zu\n", set->pair_count);
+		printf("\ttable:\n");
+		uint64_t table_index = 0;
+		while (table_index < set->table_count)
+		{
+			set_pair_t* curr = set->table[table_index];
+			while (curr)
+			{
+				printf("\t\t%s\n", (char const*)curr->key);
+				curr = curr->next;
+			}
+			table_index++;
+		}
 	}
 	void set_free(set_t* set)
 	{
