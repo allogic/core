@@ -1,13 +1,11 @@
-#define TEST_IMPLEMENTATION
+#ifndef TST_STR_H
+#define TST_STR_H
+
 #include "test.h"
-
-#define HEAP_IMPLEMENTATION
 #include "heap.h"
-
-#define STR_IMPLEMENTATION
 #include "str.h"
 
-static void tst_empty(void)
+static void tst_str_empty(void)
 {
 	TEST_BEGIN();
 	str_t str = str_alloc();
@@ -17,7 +15,7 @@ static void tst_empty(void)
 	str_free(&str);
 	TEST_END();
 }
-static void tst_append(void)
+static void tst_str_append(void)
 {
 	TEST_BEGIN();
 	str_t str = str_from("A");
@@ -35,7 +33,7 @@ static void tst_append(void)
 	str_free(&str);
 	TEST_END();
 }
-static void tst_expand(void)
+static void tst_str_expand(void)
 {
 	TEST_BEGIN();
 	str_t str = str_from("ABCDEFGHIJKLMNO");
@@ -49,7 +47,7 @@ static void tst_expand(void)
 	str_free(&str);
 	TEST_END();
 }
-static void tst_resize(void)
+static void tst_str_resize(void)
 {
 	TEST_BEGIN();
 	str_t str = str_alloc();
@@ -75,7 +73,7 @@ static void tst_resize(void)
 	str_free(&str);
 	TEST_END();
 }
-static void tst_copy_equal(void)
+static void tst_str_copy_equal(void)
 {
 	TEST_BEGIN();
 	str_t str_a = str_from("ABC");
@@ -96,7 +94,7 @@ static void tst_copy_equal(void)
 	str_free(&str_b);
 	TEST_END();
 }
-static void tst_clear(void)
+static void tst_str_clear(void)
 {
 	TEST_BEGIN();
 	str_t str = str_from("ABC");
@@ -108,18 +106,18 @@ static void tst_clear(void)
 	str_free(&str);
 	TEST_END();
 }
-
-int32_t main(void)
+static void tst_str(void)
 {
 	test_prologue();
 	heap_prologue();
-	tst_empty();
-	tst_append();
-	tst_expand();
-	tst_resize();
-	tst_copy_equal();
-	tst_clear();
+	tst_str_empty();
+	tst_str_append();
+	tst_str_expand();
+	tst_str_resize();
+	tst_str_copy_equal();
+	tst_str_clear();
 	heap_epilogue();
-	test_epilogue();
-	return 0;
+	test_epilogue("str");
 }
+
+#endif // TST_STR_H

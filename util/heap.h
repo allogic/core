@@ -79,6 +79,7 @@ extern void heap_epilogue(void);
 			printf("%zu bytes not freed\n", g_heap_allocated_bytes);
 		}
 #endif // _DEBUG
+		g_heap_allocated_bytes = 0;
 	}
 #endif // HEAP_IMPLEMENTATION
 

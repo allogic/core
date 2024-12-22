@@ -1,13 +1,11 @@
-#define TEST_IMPLEMENTATION
+#ifndef TST_VEC_H
+#define TST_VEC_H
+
 #include "test.h"
-
-#define HEAP_IMPLEMENTATION
 #include "heap.h"
-
-#define VEC_IMPLEMENTATION
 #include "vec.h"
 
-static void tst_empty(void)
+static void tst_vec_empty(void)
 {
 	TEST_BEGIN();
 	vec_t vec = vec_alloc(sizeof(uint64_t));
@@ -17,7 +15,7 @@ static void tst_empty(void)
 	vec_free(&vec);
 	TEST_END();
 }
-static void tst_push_pop(void)
+static void tst_vec_push_pop(void)
 {
 	TEST_BEGIN();
 	vec_t vec = vec_alloc(sizeof(uint64_t));
@@ -34,7 +32,7 @@ static void tst_push_pop(void)
 	vec_free(&vec);
 	TEST_END();
 }
-static void tst_expand(void)
+static void tst_vec_expand(void)
 {
 	TEST_BEGIN();
 	vec_t vec = vec_alloc(sizeof(uint64_t));
@@ -56,7 +54,7 @@ static void tst_expand(void)
 	vec_free(&vec);
 	TEST_END();
 }
-static void tst_resize(void)
+static void tst_vec_resize(void)
 {
 	TEST_BEGIN();
 	vec_t vec = vec_alloc(sizeof(uint64_t));
@@ -79,7 +77,7 @@ static void tst_resize(void)
 	vec_free(&vec);
 	TEST_END();
 }
-static void tst_copy_equal(void)
+static void tst_vec_copy_equal(void)
 {
 	TEST_BEGIN();
 	vec_t vec_a = vec_alloc(sizeof(uint64_t));
@@ -117,7 +115,7 @@ static void tst_copy_equal(void)
 	vec_free(&vec_b);
 	TEST_END();
 }
-static void tst_front_back_at(void)
+static void tst_vec_front_back_at(void)
 {
 	TEST_BEGIN();
 	vec_t vec = vec_alloc(sizeof(uint64_t));
@@ -142,7 +140,7 @@ static void tst_front_back_at(void)
 	vec_free(&vec);
 	TEST_END();
 }
-static void tst_remove(void)
+static void tst_vec_remove(void)
 {
 	TEST_BEGIN();
 	vec_t vec = vec_alloc(sizeof(uint64_t));
@@ -166,7 +164,7 @@ static void tst_remove(void)
 	vec_free(&vec);
 	TEST_END();
 }
-static void tst_swap(void)
+static void tst_vec_swap(void)
 {
 	TEST_BEGIN();
 	vec_t vec = vec_alloc(sizeof(uint64_t));
@@ -183,7 +181,7 @@ static void tst_swap(void)
 	vec_free(&vec);
 	TEST_END();
 }
-static void tst_clear(void)
+static void tst_vec_clear(void)
 {
 	TEST_BEGIN();
 	vec_t vec = vec_alloc(sizeof(uint64_t));
@@ -213,21 +211,21 @@ static void tst_clear(void)
 	vec_free(&vec);
 	TEST_END();
 }
-
-int32_t main(void)
+static void tst_vec(void)
 {
 	test_prologue();
 	heap_prologue();
-	tst_empty();
-	tst_push_pop();
-	tst_expand();
-	tst_resize();
-	tst_copy_equal();
-	tst_front_back_at();
-	tst_remove();
-	tst_swap();
-	tst_clear();
+	tst_vec_empty();
+	tst_vec_push_pop();
+	tst_vec_expand();
+	tst_vec_resize();
+	tst_vec_copy_equal();
+	tst_vec_front_back_at();
+	tst_vec_remove();
+	tst_vec_swap();
+	tst_vec_clear();
 	heap_epilogue();
-	test_epilogue();
-	return 0;
+	test_epilogue("vec");
 }
+
+#endif // TST_VEC_H

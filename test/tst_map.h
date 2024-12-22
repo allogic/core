@@ -1,13 +1,11 @@
-#define TEST_IMPLEMENTATION
+#ifndef TST_MAP_H
+#define TST_MAP_H
+
 #include "test.h"
-
-#define HEAP_IMPLEMENTATION
 #include "heap.h"
-
-#define MAP_IMPLEMENTATION
 #include "map.h"
 
-static void tst_empty(void)
+static void tst_map_empty(void)
 {
 	TEST_BEGIN();
 	map_t map = map_alloc();
@@ -18,7 +16,7 @@ static void tst_empty(void)
 	map_free(&map);
 	TEST_END();
 }
-static void tst_insert_remove(void)
+static void tst_map_insert_remove(void)
 {
 	TEST_BEGIN();
 	map_t map = map_alloc();
@@ -60,7 +58,7 @@ static void tst_insert_remove(void)
 	map_free(&map);
 	TEST_END();
 }
-static void tst_expand(void)
+static void tst_map_expand(void)
 {
 	TEST_BEGIN();
 	map_t map = map_alloc();
@@ -79,7 +77,7 @@ static void tst_expand(void)
 	map_free(&map);
 	TEST_END();
 }
-static void tst_copy_equal(void)
+static void tst_map_copy_equal(void)
 {
 	TEST_BEGIN();
 	map_t map_a = map_alloc();
@@ -122,7 +120,7 @@ static void tst_copy_equal(void)
 	map_free(&map_a);
 	TEST_END();
 }
-static void tst_clear(void)
+static void tst_map_clear(void)
 {
 	TEST_BEGIN();
 	map_t map = map_alloc();
@@ -146,17 +144,17 @@ static void tst_clear(void)
 	map_free(&map);
 	TEST_END();
 }
-
-int32_t main(void)
+static void tst_map(void)
 {
 	test_prologue();
 	heap_prologue();
-	tst_empty();
-	tst_insert_remove();
-	tst_expand();
-	tst_copy_equal();
-	tst_clear();
+	tst_map_empty();
+	tst_map_insert_remove();
+	tst_map_expand();
+	tst_map_copy_equal();
+	tst_map_clear();
 	heap_epilogue();
-	test_epilogue();
-	return 0;
+	test_epilogue("map");
 }
+
+#endif // TST_MAP_H

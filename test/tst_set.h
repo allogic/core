@@ -1,13 +1,11 @@
-#define TEST_IMPLEMENTATION
+#ifndef TST_SET_H
+#define TST_SET_H
+
 #include "test.h"
-
-#define HEAP_IMPLEMENTATION
 #include "heap.h"
-
-#define SET_IMPLEMENTATION
 #include "set.h"
 
-static void tst_empty(void)
+static void tst_set_empty(void)
 {
 	TEST_BEGIN();
 	set_t set = set_alloc();
@@ -18,7 +16,7 @@ static void tst_empty(void)
 	set_free(&set);
 	TEST_END();
 }
-static void tst_insert_remove(void)
+static void tst_set_insert_remove(void)
 {
 	TEST_BEGIN();
 	set_t set = set_alloc();
@@ -53,7 +51,7 @@ static void tst_insert_remove(void)
 	set_free(&set);
 	TEST_END();
 }
-static void tst_expand(void)
+static void tst_set_expand(void)
 {
 	TEST_BEGIN();
 	set_t set = set_alloc();
@@ -71,7 +69,7 @@ static void tst_expand(void)
 	set_free(&set);
 	TEST_END();
 }
-static void tst_copy_equal(void)
+static void tst_set_copy_equal(void)
 {
 	TEST_BEGIN();
 	set_t set_a = set_alloc();
@@ -106,7 +104,7 @@ static void tst_copy_equal(void)
 	set_free(&set_a);
 	TEST_END();
 }
-static void tst_clear(void)
+static void tst_set_clear(void)
 {
 	TEST_BEGIN();
 	set_t set = set_alloc();
@@ -129,17 +127,17 @@ static void tst_clear(void)
 	set_free(&set);
 	TEST_END();
 }
-
-int32_t main(void)
+static void tst_set(void)
 {
 	test_prologue();
 	heap_prologue();
-	tst_empty();
-	tst_insert_remove();
-	tst_expand();
-	tst_copy_equal();
-	tst_clear();
+	tst_set_empty();
+	tst_set_insert_remove();
+	tst_set_expand();
+	tst_set_copy_equal();
+	tst_set_clear();
 	heap_epilogue();
-	test_epilogue();
-	return 0;
+	test_epilogue("set");
 }
+
+#endif // TST_SET_H

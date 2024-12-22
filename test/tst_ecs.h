@@ -1,19 +1,11 @@
-#define TEST_IMPLEMENTATION
+#ifndef TST_ECS_H
+#define TST_ECS_H
+
 #include "test.h"
-
-#define HEAP_IMPLEMENTATION
 #include "heap.h"
-
-#define VEC_IMPLEMENTATION
-#include "vec.h"
-
-#define DAT_IMPLEMENTATION
-#include "dat.h"
-
-#define ECS_IMPLEMENTATION
 #include "ecs.h"
 
-static void tst_create_delete(void)
+static void tst_ecs_create_delete(void)
 {
 	TEST_BEGIN();
 	ecs_t ecs = ecs_alloc();
@@ -29,13 +21,13 @@ static void tst_create_delete(void)
 	ecs_free(&ecs);
 	TEST_END();
 }
-
-int32_t main(void)
+static void tst_ecs(void)
 {
 	test_prologue();
 	heap_prologue();
-	tst_create_delete();
+	tst_ecs_create_delete();
 	heap_epilogue();
-	test_epilogue();
-	return 0;
+	test_epilogue("ecs");
 }
+
+#endif // TST_ECS_H

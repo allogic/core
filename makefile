@@ -8,7 +8,7 @@ CFLAGS += -Wall
 CFLAGS += -Wextra
 CFLAGS += -pedantic
 CFLAGS += -Iheader
-CFLAGS += -Iheader/util
+CFLAGS += -Iutil
 CFLAGS += -Wno-comment
 CFLAGS += -Wno-unused-parameter
 CFLAGS += -Wno-declaration-after-statement
@@ -28,43 +28,15 @@ else ifeq ($(BUILD),release)
 	CFLAGS += -fomit-frame-pointer
 endif
 
-TESTS += tst_str
-TESTS += tst_vec
-TESTS += tst_set
-TESTS += tst_map
-TESTS += tst_ecs
-
-BENCHMARKS += bm_ecs
-
 all: tests benchmarks
 
 clean:
-	$(RM) $(TESTS) $(BENCHMARKS)
+	$(RM) tests benchmarks
 
-tests: $(TESTS)
-	./tst_str
-	./tst_vec
-	./tst_set
-	./tst_map
-	./tst_ecs
-
-benchmarks: $(BENCHMARKS)
-	./bm_ecs
-
-tst_str: test/tst_str.c
+tests: test/test.c
 	$(CC) -o $@ $(CFLAGS) $<
+	./tests
 
-tst_vec: test/tst_vec.c
+benchmarks: benchmark/benchmark.c
 	$(CC) -o $@ $(CFLAGS) $<
-
-tst_set: test/tst_set.c
-	$(CC) -o $@ $(CFLAGS) $<
-
-tst_map: test/tst_map.c
-	$(CC) -o $@ $(CFLAGS) $<
-
-tst_ecs: test/tst_ecs.c
-	$(CC) -o $@ $(CFLAGS) $<
-
-bm_ecs: benchmark/bm_ecs.c
-	$(CC) -o $@ $(CFLAGS) $<
+	./benchmarks
