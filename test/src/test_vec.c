@@ -1,11 +1,10 @@
-#ifndef TST_VEC_H
-#define TST_VEC_H
-
 #include "test.h"
 #include "heap.h"
 #include "vec.h"
 
-static void tst_vec_empty(void)
+#include "test_vec.h"
+
+void test_vec_empty(void)
 {
 	TEST_BEGIN();
 	vec_t vec = vec_alloc(sizeof(uint64_t));
@@ -15,7 +14,7 @@ static void tst_vec_empty(void)
 	vec_free(&vec);
 	TEST_END();
 }
-static void tst_vec_push_pop(void)
+void test_vec_push_pop(void)
 {
 	TEST_BEGIN();
 	vec_t vec = vec_alloc(sizeof(uint64_t));
@@ -32,7 +31,7 @@ static void tst_vec_push_pop(void)
 	vec_free(&vec);
 	TEST_END();
 }
-static void tst_vec_expand(void)
+void test_vec_expand(void)
 {
 	TEST_BEGIN();
 	vec_t vec = vec_alloc(sizeof(uint64_t));
@@ -54,7 +53,7 @@ static void tst_vec_expand(void)
 	vec_free(&vec);
 	TEST_END();
 }
-static void tst_vec_resize(void)
+void test_vec_resize(void)
 {
 	TEST_BEGIN();
 	vec_t vec = vec_alloc(sizeof(uint64_t));
@@ -77,7 +76,7 @@ static void tst_vec_resize(void)
 	vec_free(&vec);
 	TEST_END();
 }
-static void tst_vec_copy_equal(void)
+void test_vec_copy_equal(void)
 {
 	TEST_BEGIN();
 	vec_t vec_a = vec_alloc(sizeof(uint64_t));
@@ -115,7 +114,7 @@ static void tst_vec_copy_equal(void)
 	vec_free(&vec_b);
 	TEST_END();
 }
-static void tst_vec_front_back_at(void)
+void test_vec_front_back_at(void)
 {
 	TEST_BEGIN();
 	vec_t vec = vec_alloc(sizeof(uint64_t));
@@ -140,7 +139,7 @@ static void tst_vec_front_back_at(void)
 	vec_free(&vec);
 	TEST_END();
 }
-static void tst_vec_remove(void)
+void test_vec_remove(void)
 {
 	TEST_BEGIN();
 	vec_t vec = vec_alloc(sizeof(uint64_t));
@@ -164,7 +163,7 @@ static void tst_vec_remove(void)
 	vec_free(&vec);
 	TEST_END();
 }
-static void tst_vec_swap(void)
+void test_vec_swap(void)
 {
 	TEST_BEGIN();
 	vec_t vec = vec_alloc(sizeof(uint64_t));
@@ -181,7 +180,7 @@ static void tst_vec_swap(void)
 	vec_free(&vec);
 	TEST_END();
 }
-static void tst_vec_clear(void)
+void test_vec_clear(void)
 {
 	TEST_BEGIN();
 	vec_t vec = vec_alloc(sizeof(uint64_t));
@@ -211,21 +210,19 @@ static void tst_vec_clear(void)
 	vec_free(&vec);
 	TEST_END();
 }
-static void tst_vec(void)
+void test_vec(void)
 {
-	test_prologue();
 	heap_prologue();
-	tst_vec_empty();
-	tst_vec_push_pop();
-	tst_vec_expand();
-	tst_vec_resize();
-	tst_vec_copy_equal();
-	tst_vec_front_back_at();
-	tst_vec_remove();
-	tst_vec_swap();
-	tst_vec_clear();
-	heap_epilogue();
+	test_prologue();
+	test_vec_empty();
+	test_vec_push_pop();
+	test_vec_expand();
+	test_vec_resize();
+	test_vec_copy_equal();
+	test_vec_front_back_at();
+	test_vec_remove();
+	test_vec_swap();
+	test_vec_clear();
 	test_epilogue("vec");
+	heap_epilogue();
 }
-
-#endif // TST_VEC_H

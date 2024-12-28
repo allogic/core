@@ -1,11 +1,10 @@
-#ifndef TST_ECS_H
-#define TST_ECS_H
-
 #include "test.h"
 #include "heap.h"
 #include "ecs.h"
 
-static void tst_ecs_create_delete(void)
+#include "test_ecs.h"
+
+void test_ecs_create_delete(void)
 {
 	TEST_BEGIN();
 	ecs_t ecs = ecs_alloc();
@@ -21,13 +20,11 @@ static void tst_ecs_create_delete(void)
 	ecs_free(&ecs);
 	TEST_END();
 }
-static void tst_ecs(void)
+void test_ecs(void)
 {
-	test_prologue();
 	heap_prologue();
-	tst_ecs_create_delete();
-	heap_epilogue();
+	test_prologue();
+	test_ecs_create_delete();
 	test_epilogue("ecs");
+	heap_epilogue();
 }
-
-#endif // TST_ECS_H

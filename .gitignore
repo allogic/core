@@ -1,4 +1,6 @@
+.vs
 .vscode
 
-benchmarks
-tests
+*.obj
+*.lib
+*.exe
