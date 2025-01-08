@@ -1,9 +1,11 @@
-#ifndef TEST_H
-#define TEST_H
+#ifndef CORE_TEST_H
+#define CORE_TEST_H
 
 #include <stdint.h>
 #include <string.h>
-#include <math.h>
+
+#include "core_config.h"
+#include "core_macros.h"
 
 #ifdef TEST_VERBOSE
 	#define TEST_BEGIN() printf("%s:\n", __func__)
@@ -67,8 +69,8 @@
 
 #define TEST_FLT_LEQ(EXPR, EXPECTED) \
 	{ \
-		double_t v = (EXPR); \
-		double_t e = (EXPECTED); \
+		double v = (EXPR); \
+		double e = (EXPECTED); \
 		g_tests_total++; \
 		if (v <= e) \
 		{ \
@@ -83,8 +85,8 @@
 
 #define TEST_FLT_EQ(EXPR, EXPECTED) \
 	{ \
-		double_t v = (EXPR); \
-		double_t e = (EXPECTED); \
+		double v = (EXPR); \
+		double e = (EXPECTED); \
 		g_tests_total++; \
 		if (v == e) \
 		{ \
@@ -99,8 +101,8 @@
 
 #define TEST_FLT_GEQ(EXPR, EXPECTED) \
 	{ \
-		double_t v = (EXPR); \
-		double_t e = (EXPECTED); \
+		double v = (EXPR); \
+		double e = (EXPECTED); \
 		g_tests_total++; \
 		if (v >= e) \
 		{ \
@@ -142,4 +144,4 @@ extern uint64_t g_tests_total;
 extern uint64_t g_tests_passed;
 extern uint64_t g_tests_failed;
 
-#endif // TEST_H
+#endif // CORE_TEST_H

@@ -1,10 +1,12 @@
-#ifndef ECS_H
-#define ECS_H
+#ifndef CORE_ECS_H
+#define CORE_ECS_H
 
 #include <stdint.h>
 
-#include "vec.h"
-#include "dat.h"
+#include "core_config.h"
+#include "core_macros.h"
+#include "core_vec.h"
+#include "core_dat.h"
 
 typedef struct _ecs_t
 {
@@ -17,7 +19,7 @@ typedef struct _ecs_t
 	vec_t pools;
 } ecs_t;
 
-typedef void (*proc_t)(ecs_t* ecs, uint64_t entity, vec_t* view);
+typedef void (*ecs_for_func_t)(ecs_t* ecs, uint64_t entity, vec_t* view);
 
 extern ecs_t ecs_alloc(void);
 extern ecs_t ecs_copy(ecs_t* ref);
@@ -35,9 +37,9 @@ extern uint8_t ecs_contains(ecs_t* ecs, uint64_t entity, vec_t* view);
 extern uint64_t ecs_count(ecs_t* ecs);
 extern void* ecs_value(ecs_t* ecs, uint64_t entity, uint64_t bit, vec_t* view);
 extern dat_t* ecs_smallest(ecs_t* ecs, vec_t* view);
-extern void ecs_for(ecs_t* ecs, vec_t* view, proc_t proc);
+extern void ecs_for(ecs_t* ecs, vec_t* view, ecs_for_func_t for_func);
 extern void ecs_clear(ecs_t* ecs);
 extern void ecs_print(ecs_t* ecs);
 extern void ecs_free(ecs_t* ecs);
 
-#endif // ECS_H
+#endif // CORE_ECS_H

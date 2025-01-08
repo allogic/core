@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "vec.h"
+#include "core_vec.h"
 
 #ifdef _HEAP_TRACE
-	#include "heap.h"
+	#include "core_heap.h"
 	#define HEAP_ALLOC(SIZE) heap_alloc(SIZE)
 	#define HEAP_REALLOC(BLOCK, SIZE) heap_realloc(BLOCK, SIZE)
 	#define HEAP_FREE(BLOCK) heap_free(BLOCK)
@@ -15,30 +15,14 @@
 	#define HEAP_FREE(BLOCK) free(BLOCK)
 #endif // _HEAP_TRACE
 
-#ifndef VEC_MAX
-	#define VEC_MAX(A, B) (((A) > (B)) ? (A) : (B))
-#endif // VEC_MAX
-
-#ifndef VEC_MIN
-	#define VEC_MIN(A, B) (((A) < (B)) ? (A) : (B))
-#endif // VEC_MIN
-
-#ifndef VEC_ALIGN_DOWN_BY
-	#define VEC_ALIGN_DOWN_BY(VALUE, ALIGNMENT) (((uint64_t)(VALUE)) & ~(((uint64_t)(ALIGNMENT)) - 1))
-#endif // VEC_ALIGN_DOWN_BY
-
-#ifndef VEC_ALIGN_UP_BY
-	#define VEC_ALIGN_UP_BY(VALUE, ALIGNMENT) ((((uint64_t)(VALUE)) + (((uint64_t)(ALIGNMENT)) - 1)) & ~(((uint64_t)(ALIGNMENT)) - 1))
-#endif // VEC_ALIGN_UP_BY
-
 vec_t vec_alloc(uint64_t value_size)
 {
 	vec_t vec;
 	memset(&vec, 0, sizeof(vec_t));
-	vec.buffer = (uint8_t*)HEAP_ALLOC(VEC_ALIGN_UP_BY(VEC_BUFFER_CAPACITY, VEC_BUFFER_ALIGNMENT) * value_size);
+	vec.buffer = (uint8_t*)HEAP_ALLOC(CORE_ALIGN_UP_BY(VEC_BUFFER_CAPACITY, VEC_BUFFER_ALIGNMENT) * value_size);
 	vec.swap_buffer = (uint8_t*)HEAP_ALLOC(value_size);
 	vec.value_size = value_size;
-	vec.buffer_capacity = VEC_ALIGN_UP_BY(VEC_BUFFER_CAPACITY, VEC_BUFFER_ALIGNMENT) * value_size;
+	vec.buffer_capacity = CORE_ALIGN_UP_BY(VEC_BUFFER_CAPACITY, VEC_BUFFER_ALIGNMENT) * value_size;
 	vec.buffer_size = 0;
 	vec.buffer_count = 0;
 	return vec;
@@ -62,7 +46,7 @@ uint8_t vec_equal(vec_t* vec, vec_t* ref)
 	not_equal |= vec->value_size != ref->value_size;
 	not_equal |= vec->buffer_size != ref->buffer_size;
 	not_equal |= vec->buffer_count != ref->buffer_count;
-	not_equal |= memcmp(vec->buffer, ref->buffer, VEC_MIN(vec->buffer_size, ref->buffer_size));
+	not_equal |= memcmp(vec->buffer, ref->buffer, CORE_MIN(vec->buffer_size, ref->buffer_size));
 	return not_equal == 0;
 }
 void vec_fill(vec_t* vec, void const* value)
@@ -92,6 +76,19 @@ void vec_push(vec_t* vec, void const* value)
 		vec_expand(vec);
 	}
 }
+void vec_push_range(vec_t* vec, vec_t* range)
+{
+	if (range)
+	{
+		vec->buffer_count += range->buffer_count;
+		vec->buffer_size += range->buffer_size;
+		while (vec->buffer_size >= vec->buffer_capacity)
+		{
+			vec_expand(vec);
+		}
+		memcpy(vec->buffer + vec->buffer_size - range->buffer_size, range->buffer, range->buffer_size);
+	}
+}
 void vec_pop(vec_t* vec, void* value)
 {
 	vec->buffer_count--;
@@ -108,7 +105,7 @@ void vec_resize(vec_t* vec, uint64_t count)
 	uint64_t buffer_capacity = 0;
 	if (count)
 	{
-		buffer_capacity = VEC_ALIGN_UP_BY(count, VEC_BUFFER_ALIGNMENT) * vec->value_size * 2;
+		buffer_capacity = CORE_ALIGN_UP_BY(count, VEC_BUFFER_ALIGNMENT) * vec->value_size * 2;
 	}
 	else
 	{
@@ -121,7 +118,7 @@ void vec_resize(vec_t* vec, uint64_t count)
 }
 void vec_expand(vec_t* vec)
 {
-	uint64_t buffer_capacity = VEC_ALIGN_UP_BY(vec->buffer_count, VEC_BUFFER_ALIGNMENT) * vec->value_size * 2;
+	uint64_t buffer_capacity = CORE_ALIGN_UP_BY(vec->buffer_count, VEC_BUFFER_ALIGNMENT) * vec->value_size * 2;
 	vec->buffer = (uint8_t*)HEAP_REALLOC(vec->buffer, buffer_capacity);
 	vec->buffer_capacity = buffer_capacity;
 }
@@ -197,7 +194,7 @@ uint64_t vec_capacity(vec_t* vec)
 {
 	return vec->buffer_capacity;
 }
-void vec_print(vec_t* vec)
+void vec_print(vec_t* vec, vec_print_func_t print_func)
 {
 	printf("vector:\n");
 	printf("\tvalue_size: %zu\n", vec->value_size);
@@ -208,7 +205,7 @@ void vec_print(vec_t* vec)
 	uint64_t buffer_index = 0;
 	while (buffer_index < vec->buffer_count)
 	{
-		printf("\t\t%zu -> %x\n", buffer_index, *(uint8_t*)vec_at(vec, buffer_index));
+		print_func(buffer_index, vec_at(vec, buffer_index));
 		buffer_index++;
 	}
 }

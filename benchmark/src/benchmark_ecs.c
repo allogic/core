@@ -1,16 +1,16 @@
-#include "timer.h"
-#include "heap.h"
+#include "core_timer.h"
+#include "core_heap.h"
 
 #include "benchmark_ecs.h"
 
-void benchmark_ecs_for2_proc(ecs_t* ecs, uint64_t entity, vec_t* view)
+void benchmark_ecs_for2(ecs_t* ecs, uint64_t entity, vec_t* view)
 {
 	uint64_t* dummy0 = (uint64_t*)ecs_value(ecs, entity, 0, view);
 	uint64_t* dummy1 = (uint64_t*)ecs_value(ecs, entity, 1, view);
 	*dummy0 = 42;
 	*dummy1 = 42;
 }
-void benchmark_ecs_for4_proc(ecs_t* ecs, uint64_t entity, vec_t* view)
+void benchmark_ecs_for4(ecs_t* ecs, uint64_t entity, vec_t* view)
 {
 	uint64_t* dummy0 = (uint64_t*)ecs_value(ecs, entity, 0, view);
 	uint64_t* dummy1 = (uint64_t*)ecs_value(ecs, entity, 1, view);
@@ -105,7 +105,7 @@ void benchmark_ecs_for2(ecs_t* ecs)
 {
 	vec_t view = ecs_all(ecs, 0b11);
 	TIMER_BEGIN();
-	ecs_for(ecs, &view, benchmark_ecs_for2_proc);
+	ecs_for(ecs, &view, benchmark_ecs_for2);
 	TIMER_END();
 	vec_free(&view);
 }
@@ -113,7 +113,7 @@ void benchmark_ecs_for4(ecs_t* ecs)
 {
 	vec_t view = ecs_all(ecs, 0b1111);
 	TIMER_BEGIN();
-	ecs_for(ecs, &view, benchmark_ecs_for4_proc);
+	ecs_for(ecs, &view, benchmark_ecs_for4);
 	TIMER_END();
 	vec_free(&view);
 }

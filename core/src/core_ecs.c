@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "ecs.h"
+#include "core_ecs.h"
 
 #ifdef _HEAP_TRACE
-	#include "heap.h"
+	#include "core_heap.h"
 	#define HEAP_ALLOC(SIZE) heap_alloc(SIZE)
 	#define HEAP_REALLOC(BLOCK, SIZE) heap_realloc(BLOCK, SIZE)
 	#define HEAP_FREE(BLOCK) heap_free(BLOCK)
@@ -14,38 +14,6 @@
 	#define HEAP_REALLOC(BLOCK, SIZE) realloc(BLOCK, SIZE)
 	#define HEAP_FREE(BLOCK) free(BLOCK)
 #endif // _HEAP_TRACE
-
-#ifndef ECS_INVALID_ENTITY
-	#define ECS_INVALID_ENTITY (DAT_TOMBSTONE)
-#endif // ECS_INVALID_ENTITY
-
-#ifndef ECS_MAX_POOL_COUNT
-	#define ECS_MAX_POOL_COUNT (0xFFFFFFFFFFFFFFFF)
-#endif // ECS_MAX_POOL_COUNT
-
-#ifndef ECS_MAX_POOLS
-	#define ECS_MAX_POOLS (64)
-#endif // ECS_MAX_POOLS
-
-#ifndef ECS_IS_BIT_SET
-	#define ECS_IS_BIT_SET(VALUE, BIT) (((uint64_t)(VALUE)) & (((uint64_t)1) << (BIT)))
-#endif // ECS_IS_BIT_SET
-
-#ifndef ECS_IS_BIT_NOT_SET
-	#define ECS_IS_BIT_NOT_SET(VALUE, BIT) (!(((uint64_t)(VALUE)) & (((uint64_t)1) << (BIT))))
-#endif // ECS_IS_BIT_NOT_SET
-
-#ifndef ECS_SET_BIT
-	#define ECS_SET_BIT(VALUE, BIT) (((uint64_t)(VALUE)) | (((uint64_t)1) << (BIT)))
-#endif // ECS_SET_BIT
-
-#ifndef ECS_CLEAR_BIT
-	#define ECS_CLEAR_BIT(VALUE, BIT) (((uint64_t)(VALUE)) & (~(((uint64_t)1) << (BIT))))
-#endif // ECS_CLEAR_BIT
-
-#ifndef ECS_TOGGLE_BIT
-	#define ECS_TOGGLE_BIT(VALUE, BIT) (((uint64_t)(VALUE)) ^ (((uint64_t)1) << (BIT)))
-#endif // ECS_TOGGLE_BIT
 
 ecs_t ecs_alloc(void)
 {
@@ -93,7 +61,7 @@ void ecs_delete(ecs_t* ecs, uint64_t entity)
 	uint64_t bit = 0;
 	while (bit < ECS_MAX_POOLS)
 	{
-		if (ECS_IS_BIT_SET(mask, bit))
+		if (CORE_IS_BIT_SET(mask, bit))
 		{
 			dat_t* pool = (dat_t*)vec_at(&ecs->pools, bit);
 			dat_remove(pool, entity);
@@ -107,12 +75,12 @@ void ecs_delete(ecs_t* ecs, uint64_t entity)
 void ecs_register(ecs_t* ecs, uint64_t bit, uint64_t value_size)
 {
 	dat_t* pool = (dat_t*)vec_at(&ecs->pools, bit);
-	if (ECS_IS_BIT_SET(ecs->active_pools, bit))
+	if (CORE_IS_BIT_SET(ecs->active_pools, bit))
 	{
 		dat_free(pool);
 		ecs->active_pool_count--;
 	}
-	ecs->active_pools = ECS_SET_BIT(ecs->active_pools, bit);
+	ecs->active_pools = CORE_SET_BIT(ecs->active_pools, bit);
 	ecs->active_pool_count++;
 	*pool = dat_alloc(value_size);
 }
@@ -125,7 +93,7 @@ void ecs_attach(ecs_t* ecs, uint64_t entity, uint64_t bit, void const* value)
 	dat_t* pool = (dat_t*)vec_at(&ecs->pools, bit);
 	dat_set(pool, entity, value);
 	uint64_t mask = *(uint64_t*)dat_get(&ecs->masks, entity);
-	mask = ECS_SET_BIT(mask, bit);
+	mask = CORE_SET_BIT(mask, bit);
 	dat_set(&ecs->masks, entity, &mask);
 }
 void ecs_detach(ecs_t* ecs, uint64_t entity, uint64_t bit)
@@ -133,7 +101,7 @@ void ecs_detach(ecs_t* ecs, uint64_t entity, uint64_t bit)
 	dat_t* pool = (dat_t*)vec_at(&ecs->pools, bit);
 	dat_remove(pool, entity);
 	uint64_t mask = *(uint64_t*)dat_get(&ecs->masks, entity);
-	mask = ECS_CLEAR_BIT(mask, bit);
+	mask = CORE_CLEAR_BIT(mask, bit);
 	dat_set(&ecs->masks, entity, &mask);
 }
 void ecs_set(ecs_t* ecs, uint64_t entity, uint64_t bit, void const* value)
@@ -153,7 +121,7 @@ vec_t ecs_all(ecs_t* ecs, uint64_t mask)
 	while (bit < ECS_MAX_POOLS)
 	{
 		dat_t* pool = (dat_t*)vec_at(&ecs->pools, bit);
-		if (ECS_IS_BIT_SET(mask, bit))
+		if (CORE_IS_BIT_SET(mask, bit))
 		{
 			vec_push(&view, &pool);
 		}
@@ -204,7 +172,7 @@ dat_t* ecs_smallest(ecs_t* ecs, vec_t* view)
 	}
 	return smallest_pool;
 }
-void ecs_for(ecs_t* ecs, vec_t* view, proc_t proc)
+void ecs_for(ecs_t* ecs, vec_t* view, ecs_for_func_t for_func)
 {
 	dat_t* smallest_pool = ecs_smallest(ecs, view);
 	uint64_t entity_index = 0;
@@ -212,7 +180,7 @@ void ecs_for(ecs_t* ecs, vec_t* view, proc_t proc)
 	while (entity_index < entity_count)
 	{
 		uint64_t entity = dat_id(smallest_pool, entity_index);
-		proc(ecs, entity, view);
+		for_func(ecs, entity, view);
 		entity_index++;
 	}
 }
@@ -221,7 +189,7 @@ void ecs_clear(ecs_t* ecs)
 	uint64_t bit = 0;
 	while (bit < ECS_MAX_POOLS)
 	{
-		if (ECS_IS_BIT_SET(ecs->active_pools, bit))
+		if (CORE_IS_BIT_SET(ecs->active_pools, bit))
 		{
 			dat_t* pool = (dat_t*)vec_at(&ecs->pools, bit);
 			dat_clear(pool);
@@ -251,7 +219,7 @@ void ecs_print(ecs_t* ecs)
 	bit = 0;
 	while (bit < ECS_MAX_POOLS)
 	{
-		printf("%3zu", ECS_IS_BIT_SET(ecs->active_pools, 65 - bit));
+		printf("%3zu", CORE_IS_BIT_SET(ecs->active_pools, 65 - bit));
 		bit++;
 	}
 	printf("]\n");
@@ -278,7 +246,7 @@ void ecs_free(ecs_t* ecs)
 	uint64_t bit = 0;
 	while (bit < ECS_MAX_POOLS)
 	{
-		if (ECS_IS_BIT_SET(ecs->active_pools, bit))
+		if (CORE_IS_BIT_SET(ecs->active_pools, bit))
 		{
 			dat_t* pool = (dat_t*)vec_at(&ecs->pools, bit);
 			dat_free(pool);

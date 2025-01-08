@@ -1,6 +1,6 @@
-#include "test.h"
-#include "heap.h"
-#include "ecs.h"
+#include "core_test.h"
+#include "core_heap.h"
+#include "core_ecs.h"
 
 #include "test_ecs.h"
 

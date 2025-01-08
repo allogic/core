@@ -1,11 +1,10 @@
 #include <stdio.h>
 #include <string.h>
-#include <math.h>
 
-#include "map.h"
+#include "core_map.h"
 
 #ifdef _HEAP_TRACE
-	#include "heap.h"
+	#include "core_heap.h"
 	#define HEAP_ALLOC(SIZE) heap_alloc(SIZE)
 	#define HEAP_REALLOC(BLOCK, SIZE) heap_realloc(BLOCK, SIZE)
 	#define HEAP_FREE(BLOCK) heap_free(BLOCK)
@@ -16,13 +15,26 @@
 	#define HEAP_FREE(BLOCK) free(BLOCK)
 #endif // _HEAP_TRACE
 
-#ifndef MAP_MAX
-	#define MAP_MAX(A, B) (((A) > (B)) ? (A) : (B))
-#endif // MAP_MAX
-
-#ifndef MAP_MIN
-	#define MAP_MIN(A, B) (((A) < (B)) ? (A) : (B))
-#endif // MAP_MIN
+void* map_pair_key(map_pair_t* pair)
+{
+	return pair->key;
+}
+uint64_t map_pair_key_size(map_pair_t* pair)
+{
+	return pair->key_size;
+}
+void* map_pair_value(map_pair_t* pair)
+{
+	return pair->value;
+}
+uint64_t map_pair_value_size(map_pair_t* pair)
+{
+	return pair->value_size;
+}
+map_pair_t* map_pair_next(map_pair_t* pair)
+{
+	return pair->next;
+}
 
 map_t map_alloc(void)
 {
@@ -85,8 +97,8 @@ uint8_t map_equal(map_t* map, map_t* ref)
 				not_equal |= curr->value_size != ref_curr->value_size;
 				if (not_equal == 0)
 				{
-					not_equal |= memcmp(curr->key, ref_curr->key, MAP_MIN(curr->key_size, ref_curr->key_size));
-					not_equal |= memcmp(curr->value, ref_curr->value, MAP_MIN(curr->value_size, ref_curr->value_size));
+					not_equal |= memcmp(curr->key, ref_curr->key, CORE_MIN(curr->key_size, ref_curr->key_size));
+					not_equal |= memcmp(curr->value, ref_curr->value, CORE_MIN(curr->value_size, ref_curr->value_size));
 				}
 				ref_curr = ref_curr->next;
 				curr = curr->next;
@@ -99,7 +111,7 @@ uint8_t map_equal(map_t* map, map_t* ref)
 uint8_t map_insert(map_t* map, void const* key, uint64_t key_size, void const* value, uint64_t value_size)
 {
 	uint8_t key_exists = 0;
-	float_t load_factor = map_load_factor(map);
+	uint8_t load_factor = map_load_factor(map);
 	if (load_factor > MAP_LOAD_FACTOR)
 	{
 		map_expand(map);
@@ -108,7 +120,7 @@ uint8_t map_insert(map_t* map, void const* key, uint64_t key_size, void const* v
 	map_pair_t* curr = map->table[hash];
 	while (curr)
 	{
-		if (memcmp(curr->key, key, MAP_MIN(curr->key_size, key_size)) == 0)
+		if (memcmp(curr->key, key, CORE_MIN(curr->key_size, key_size)) == 0)
 		{
 			key_exists = 1;
 			break;
@@ -144,7 +156,7 @@ uint8_t map_remove(map_t* map, void const* key, uint64_t key_size, void* value, 
 	map_pair_t* prev = 0;
 	while (curr)
 	{
-		if (memcmp(curr->key, key, MAP_MIN(curr->key_size, key_size)) == 0)
+		if (memcmp(curr->key, key, CORE_MIN(curr->key_size, key_size)) == 0)
 		{
 			if (prev)
 			{
@@ -156,7 +168,7 @@ uint8_t map_remove(map_t* map, void const* key, uint64_t key_size, void* value, 
 			}
 			if (value)
 			{
-				memcpy(value, curr->value, MAP_MIN(value_size, curr->value_size));
+				memcpy(value, curr->value, CORE_MIN(value_size, curr->value_size));
 			}
 			HEAP_FREE(curr->key);
 			HEAP_FREE(curr->value);
@@ -175,7 +187,7 @@ uint8_t map_contains(map_t* map, void const* key, uint64_t key_size)
 	map_pair_t* curr = map->table[hash];
 	while (curr)
 	{
-		if (memcmp(curr->key, key, MAP_MIN(curr->key_size, key_size)) == 0)
+		if (memcmp(curr->key, key, CORE_MIN(curr->key_size, key_size)) == 0)
 		{
 			return 1;
 		}
@@ -191,6 +203,10 @@ uint64_t map_table_count(map_t* map)
 {
 	return map->table_count;
 }
+map_pair_t* map_table_at(map_t* map, uint64_t index)
+{
+	return map->table[index];
+}
 uint64_t map_count(map_t* map)
 {
 	return map->pair_count;
@@ -201,7 +217,7 @@ void* map_at(map_t* map, void const* key, uint64_t key_size)
 	map_pair_t* curr = map->table[hash];
 	while (curr)
 	{
-		if (memcmp(curr->key, key, MAP_MIN(curr->key_size, key_size)) == 0)
+		if (memcmp(curr->key, key, CORE_MIN(curr->key_size, key_size)) == 0)
 		{
 			return curr->value;
 		}
@@ -263,11 +279,11 @@ uint64_t map_hash(map_t* map, void const* key, uint64_t key_size, uint64_t modul
 	}
 	return hash % modulus;
 }
-float_t map_load_factor(map_t* map)
+uint8_t map_load_factor(map_t* map)
 {
-	return ((float_t)(map->pair_count + 1)) / (float_t)map->table_count;
+	return ((map->pair_count + 1) / map->table_count) * 100;
 }
-void map_print(map_t* map)
+void map_print(map_t* map, map_print_func_t print_func)
 {
 	printf("map:\n");
 	printf("\ttable_size: %zu\n", map->table_size);
@@ -280,7 +296,7 @@ void map_print(map_t* map)
 		map_pair_t* curr = map->table[table_index];
 		while (curr)
 		{
-			printf("\t\t%s -> %s\n", (char const*)curr->key, (char const*)curr->value);
+			print_func(curr->key, curr->key_size, curr->value, curr->value_size);
 			curr = curr->next;
 		}
 		table_index++;

@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "test.h"
+#include "core_test.h"
 
 uint64_t g_tests_total;
 uint64_t g_tests_passed;

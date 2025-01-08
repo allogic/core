@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "str.h"
+#include "core_str.h"
 
 #ifdef _HEAP_TRACE
-	#include "heap.h"
+	#include "core_heap.h"
 	#define HEAP_ALLOC(SIZE) heap_alloc(SIZE)
 	#define HEAP_REALLOC(BLOCK, SIZE) heap_realloc(BLOCK, SIZE)
 	#define HEAP_FREE(BLOCK) heap_free(BLOCK)
@@ -15,28 +15,12 @@
 	#define HEAP_FREE(BLOCK) free(BLOCK)
 #endif // _HEAP_TRACE
 
-#ifndef STR_MAX
-	#define STR_MAX(A, B) (((A) > (B)) ? (A) : (B))
-#endif // STR_MAX
-
-#ifndef STR_MIN
-	#define STR_MIN(A, B) (((A) < (B)) ? (A) : (B))
-#endif // STR_MIN
-
-#ifndef STR_ALIGN_DOWN_BY
-	#define STR_ALIGN_DOWN_BY(VALUE, ALIGNMENT) (((uint64_t)(VALUE)) & ~(((uint64_t)(ALIGNMENT)) - 1))
-#endif // STR_ALIGN_DOWN_BY
-
-#ifndef STR_ALIGN_UP_BY
-	#define STR_ALIGN_UP_BY(VALUE, ALIGNMENT) ((((uint64_t)(VALUE)) + (((uint64_t)(ALIGNMENT)) - 1)) & ~(((uint64_t)(ALIGNMENT)) - 1))
-#endif // STR_ALIGN_UP_BY
-
 str_t str_alloc(void)
 {
 	str_t str;
 	memset(&str, 0, sizeof(str_t));
-	str.buffer = (char*)HEAP_ALLOC(STR_ALIGN_UP_BY(STR_BUFFER_CAPACITY, STR_BUFFER_ALIGNMENT));
-	str.buffer_capacity = STR_ALIGN_UP_BY(STR_BUFFER_CAPACITY, STR_BUFFER_ALIGNMENT);
+	str.buffer = (char*)HEAP_ALLOC(CORE_ALIGN_UP_BY(STR_BUFFER_CAPACITY, STR_BUFFER_ALIGNMENT));
+	str.buffer_capacity = CORE_ALIGN_UP_BY(STR_BUFFER_CAPACITY, STR_BUFFER_ALIGNMENT);
 	str.buffer_size = 0;
 	str.buffer[0] = 0;
 	return str;
@@ -64,7 +48,7 @@ uint8_t str_equal(str_t* str, str_t* ref)
 {
 	uint8_t not_equal = 0;
 	not_equal |= str->buffer_size != ref->buffer_size;
-	not_equal |= memcmp(str->buffer, ref->buffer, STR_MIN(str->buffer_size, str->buffer_size));
+	not_equal |= memcmp(str->buffer, ref->buffer, CORE_MIN(str->buffer_size, str->buffer_size));
 	return not_equal == 0;
 }
 void str_fill(str_t* str, char value)
@@ -95,11 +79,11 @@ void str_resize(str_t* str, uint64_t size)
 	uint64_t buffer_capacity = 0;
 	if (size)
 	{
-		buffer_capacity = STR_ALIGN_UP_BY(size + 1, STR_BUFFER_ALIGNMENT);
+		buffer_capacity = CORE_ALIGN_UP_BY(size + 1, STR_BUFFER_ALIGNMENT);
 	}
 	else
 	{
-		buffer_capacity = STR_ALIGN_UP_BY(STR_BUFFER_CAPACITY, STR_BUFFER_ALIGNMENT);
+		buffer_capacity = CORE_ALIGN_UP_BY(STR_BUFFER_CAPACITY, STR_BUFFER_ALIGNMENT);
 	}
 	str->buffer = (char*)HEAP_REALLOC(str->buffer, buffer_capacity);
 	str->buffer_capacity = buffer_capacity;
@@ -108,7 +92,7 @@ void str_resize(str_t* str, uint64_t size)
 }
 void str_expand(str_t* str)
 {
-	uint64_t buffer_capacity = STR_ALIGN_UP_BY(str->buffer_size + 1, STR_BUFFER_ALIGNMENT);
+	uint64_t buffer_capacity = CORE_ALIGN_UP_BY(str->buffer_size + 1, STR_BUFFER_ALIGNMENT);
 	str->buffer = (char*)HEAP_REALLOC(str->buffer, buffer_capacity);
 	str->buffer_capacity = buffer_capacity;
 }

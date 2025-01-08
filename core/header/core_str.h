@@ -1,15 +1,10 @@
-#ifndef STR_H
-#define STR_H
+#ifndef CORE_STR_H
+#define CORE_STR_H
 
 #include <stdint.h>
 
-#ifndef STR_BUFFER_CAPACITY
-	#define STR_BUFFER_CAPACITY (16)
-#endif // STR_BUFFER_CAPACITY
-
-#ifndef STR_BUFFER_ALIGNMENT
-	#define STR_BUFFER_ALIGNMENT (16)
-#endif // STR_BUFFER_ALIGNMENT
+#include "core_config.h"
+#include "core_macros.h"
 
 typedef struct _str_t
 {
@@ -36,4 +31,4 @@ extern uint64_t str_capacity(str_t* str);
 extern void str_print(str_t* str);
 extern void str_free(str_t* str);
 
-#endif // STR_H
+#endif // CORE_STR_H

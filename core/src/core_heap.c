@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "heap.h"
+#include "core_heap.h"
 
 uint64_t g_heap_allocated_bytes;
 

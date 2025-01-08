@@ -6,8 +6,8 @@
 #include "vec.h"
 #include "ecs.h"
 
-extern void benchmark_ecs_for2_proc(ecs_t* ecs, uint64_t entity, vec_t* view);
-extern void benchmark_ecs_for4_proc(ecs_t* ecs, uint64_t entity, vec_t* view);
+extern void benchmark_ecs_for2(ecs_t* ecs, uint64_t entity, vec_t* view);
+extern void benchmark_ecs_for4(ecs_t* ecs, uint64_t entity, vec_t* view);
 extern void benchmark_ecs_create_entity(ecs_t* ecs, vec_t* entities);
 extern void benchmark_ecs_attach_component(ecs_t* ecs, vec_t* entities);
 extern void benchmark_ecs_set_component(ecs_t* ecs, vec_t* entities);

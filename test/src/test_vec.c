@@ -1,6 +1,6 @@
-#include "test.h"
-#include "heap.h"
-#include "vec.h"
+#include "core_test.h"
+#include "core_heap.h"
+#include "core_vec.h"
 
 #include "test_vec.h"
 

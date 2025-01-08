@@ -1,6 +1,6 @@
-#include "test.h"
-#include "heap.h"
-#include "map.h"
+#include "core_test.h"
+#include "core_heap.h"
+#include "core_map.h"
 
 #include "test_map.h"
 

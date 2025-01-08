@@ -1,8 +1,11 @@
-#ifndef TIMER_H
-#define TIMER_H
+#ifndef CORE_TIMER_H
+#define CORE_TIMER_H
 
 #include <stdio.h>
 #include <stdint.h>
+
+#include "core_config.h"
+#include "core_macros.h"
 
 #ifdef _MSC_VER
 	#include <windows.h>
@@ -52,4 +55,4 @@
 
 #endif // COMPILER_SELECTION
 
-#endif // TIMER_H
+#endif // CORE_TIMER_H

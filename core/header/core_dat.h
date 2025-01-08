@@ -1,25 +1,11 @@
-#ifndef DAT_H
-#define DAT_H
+#ifndef CORE_DAT_H
+#define CORE_DAT_H
 
 #include <stdint.h>
 
-#include "vec.h"
-
-#ifndef DAT_PAGE_COUNT
-	#define DAT_PAGE_COUNT (16)
-#endif // DAT_PAGE_COUNT
-
-#ifndef DAT_SPARSE_COUNT
-	#define DAT_SPARSE_COUNT (16)
-#endif // DAT_SPARSE_COUNT
-
-#ifndef DAT_SPARSE_LIMIT
-	#define DAT_SPARSE_LIMIT (16)
-#endif // DAT_SPARSE_LIMIT
-
-#ifndef DAT_TOMBSTONE
-	#define DAT_TOMBSTONE (0xFFFFFFFFFFFFFFFF)
-#endif // DAT_TOMBSTONE
+#include "core_config.h"
+#include "core_macros.h"
+#include "core_vec.h"
 
 typedef struct _page_t
 {
@@ -56,4 +42,4 @@ extern void* dat_value(dat_t* dat, uint64_t index);
 extern void dat_print(dat_t* dat);
 extern void dat_free(dat_t* dat);
 
-#endif // DAT_H
+#endif // CORE_DAT_H

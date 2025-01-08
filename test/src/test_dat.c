@@ -1,6 +1,6 @@
-#include "test.h"
-#include "heap.h"
-#include "dat.h"
+#include "core_test.h"
+#include "core_heap.h"
+#include "core_dat.h"
 
 #include "test_dat.h"
 
