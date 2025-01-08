@@ -14,11 +14,11 @@ typedef struct _str_t
 } str_t;
 
 extern str_t str_alloc(void);
-extern str_t str_from(char const* value);
+extern str_t str_from(char const* value, uint64_t size);
 extern str_t str_copy(str_t* ref);
 extern void str_fill(str_t* str, char value);
 extern uint8_t str_equal(str_t* str, str_t* ref);
-extern void str_append(str_t* str, char const* value);
+extern void str_append(str_t* str, char const* value, uint64_t size);
 extern void str_resize(str_t* str, uint64_t size);
 extern void str_expand(str_t* str);
 extern void str_clear(str_t* str);

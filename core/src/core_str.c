@@ -25,12 +25,12 @@ str_t str_alloc(void)
 	str.buffer[0] = 0;
 	return str;
 }
-str_t str_from(char const* value)
+str_t str_from(char const* value, uint64_t size)
 {
 	str_t str = str_alloc();
 	if (value)
 	{
-		str_append(&str, value);
+		str_append(&str, value, size);
 	}
 	return str;
 }
@@ -59,17 +59,16 @@ void str_fill(str_t* str, char value)
 		str->buffer[str->buffer_size] = 0;
 	}
 }
-void str_append(str_t* str, char const* value)
+void str_append(str_t* str, char const* value, uint64_t size)
 {
 	if (value)
 	{
-		uint64_t value_size = strlen(value);
-		str->buffer_size += value_size;
+		str->buffer_size += size;
 		while (str->buffer_size >= str->buffer_capacity)
 		{
 			str_expand(str);
 		}
-		memcpy(str->buffer + str->buffer_size - value_size, value, value_size);
+		memcpy(str->buffer + str->buffer_size - size, value, size);
 		str->buffer[str->buffer_size] = 0;
 	}
 }
